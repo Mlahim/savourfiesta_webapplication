@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Environment variables (CONTAINS SECRETS)
+.env
+.env.local
+.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+output.log
+error.log
+
+# Debug & test files
+debug_output*.txt
+error*.txt
+test_db.js
+
+# Uploads (local dev only)
+uploads/
+
+# Miscellaneous
+*.txt
+!README.md
+screenshots/
