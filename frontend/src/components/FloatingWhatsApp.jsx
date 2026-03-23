@@ -11,7 +11,7 @@ const FloatingWhatsApp = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [hasDragged, setHasDragged] = useState(false);
     const buttonRef = useRef(null);
-    const dragStartRef = useRef({ x: 0, y: 0 });
+    const dragStartRef = useRef({ offsetX: 0, offsetY: 0, startX: 0, startY: 0 });
 
     // Set initial position (bottom right, slightly higher than before so it doesn't cover footer)
     useEffect(() => {
@@ -40,15 +40,23 @@ const FloatingWhatsApp = () => {
         
         dragStartRef.current = {
             offsetX: e.clientX - position.x,
-            offsetY: e.clientY - position.y
+            offsetY: e.clientY - position.y,
+            startX: e.clientX,
+            startY: e.clientY
         };
     };
 
     const handlePointerMove = (e) => {
         if (!isDragging) return;
         
-        // If we moved even a little bit, consider it a drag
-        setHasDragged(true);
+        // Calculate distance moved from initial touch
+        const deltaX = Math.abs(e.clientX - dragStartRef.current.startX);
+        const deltaY = Math.abs(e.clientY - dragStartRef.current.startY);
+        
+        // Only consider it a drag if moved more than 10 pixels (accounts for finger tap jitter)
+        if (deltaX > 10 || deltaY > 10) {
+            setHasDragged(true);
+        }
         
         const newX = e.clientX - dragStartRef.current.offsetX;
         const newY = e.clientY - dragStartRef.current.offsetY;
