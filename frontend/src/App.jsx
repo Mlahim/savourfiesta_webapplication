@@ -21,6 +21,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { Toaster } from "react-hot-toast";
 
 import Footer from "./components/Footer";
+import FloatingWhatsApp from "./components/FloatingWhatsApp";
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -33,6 +34,7 @@ const Layout = ({ children }) => {
       {showNavbar && <Navbar />}
       {children}
       {showNavbar && <Footer />}
+      <FloatingWhatsApp />
     </>
   );
 };

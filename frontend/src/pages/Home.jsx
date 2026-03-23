@@ -62,7 +62,7 @@ const Home = () => {
             Our Signature Menu
             <span className="block h-1 w-1/2 bg-orange-500 mx-auto mt-2 rounded-full"></span>
           </h2>
-          <p className="text-gray-500 mt-3">Curated dishes from top chefs around the world</p>
+          <p className="text-gray-500 mt-3">My handcrafted signature dishes, prepared fresh just for you.</p>
         </div>
 
         {/* Category Filter Tabs */}

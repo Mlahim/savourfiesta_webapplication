@@ -35,15 +35,15 @@ const Footer = () => {
                         <ul className="space-y-4">
                             <li className="flex items-start gap-3">
                                 <MapPin className="text-orange-500 mt-1 shrink-0" size={18} />
-                                <span>123 Culinary Avenue,<br />Food District, FD 10101</span>
+                                <span>Khanewal</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Phone className="text-orange-500 shrink-0" size={18} />
-                                <span>+1 (555) 123-4567</span>
+                                <span>03019090311</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail className="text-orange-500 shrink-0" size={18} />
-                                <span>hello@savourfiesta.com</span>
+                                <span>savourfiestaofficial@gmail.com</span>
                             </li>
                         </ul>
                     </div>
@@ -68,8 +68,19 @@ const Footer = () => {
                     </div>
                 </div>
 
-                <div className="border-t border-gray-800 pt-6 mt-6 text-center text-sm text-gray-500">
+                <div className="border-t border-gray-800 pt-6 mt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
                     <p>&copy; {currentYear} SavourFiesta. All rights reserved.</p>
+                    <p className="mt-2 md:mt-0">
+                        Designed & Developed by{' '}
+                        <a 
+                            href="https://www.muhammadmlahim.me/" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-orange-500 hover:text-orange-400 font-medium transition-colors"
+                        >
+                            Muhammad Mlahim
+                        </a>
+                    </p>
                 </div>
             </div>
         </footer>
