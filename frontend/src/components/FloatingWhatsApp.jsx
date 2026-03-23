@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { Headset } from 'lucide-react';
 
 const FloatingWhatsApp = () => {
     // Replace with your actual WhatsApp number with country code (e.g., +923019090311)
@@ -94,12 +94,12 @@ const FloatingWhatsApp = () => {
                 top: `${position.y}px`,
                 touchAction: 'none' // Prevent scrolling while dragging on mobile
             }}
-            className={`fixed z-50 flex items-center justify-center w-14 h-14 bg-green-500 text-white rounded-full shadow-[0_4px_14px_rgba(34,197,94,0.4)] ${!isDragging ? 'hover:bg-green-600 transition-colors duration-300 hover:scale-110' : 'cursor-grabbing scale-105 shadow-[0_8px_25px_rgba(34,197,94,0.6)]'} cursor-grab group`}
-            aria-label="Chat on WhatsApp"
+            className={`fixed z-50 flex items-center justify-center w-14 h-14 bg-orange-500 text-white rounded-full shadow-[0_4px_14px_rgba(234,88,12,0.4)] ${!isDragging ? 'hover:bg-orange-600 transition-colors duration-300 hover:scale-110' : 'cursor-grabbing scale-105 shadow-[0_8px_25px_rgba(234,88,12,0.6)]'} cursor-grab group`}
+            aria-label="Helpline"
         >
-            <MessageCircle size={32} />
+            <Headset size={32} />
             <span className="absolute right-16 bg-white text-gray-800 text-sm font-semibold py-1.5 px-3 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-300 shadow-lg whitespace-nowrap before:content-[''] before:absolute before:top-1/2 before:left-full before:-mt-1.5 before:border-[6px] before:border-transparent before:border-l-white">
-                Chat with us (Drag me!)
+                Helpline (Drag me!)
             </span>
         </a>
     );
