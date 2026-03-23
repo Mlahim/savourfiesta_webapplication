@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
+import TopBanner from "./components/TopBanner";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -31,7 +32,12 @@ const Layout = ({ children }) => {
   return (
     <>
       <ScrollToTop />
-      {showNavbar && <Navbar />}
+      {showNavbar && (
+        <div className="sticky top-0 z-50">
+          <TopBanner />
+          <Navbar />
+        </div>
+      )}
       {children}
       {showNavbar && <Footer />}
       <FloatingWhatsApp />

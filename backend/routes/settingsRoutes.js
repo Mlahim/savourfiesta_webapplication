@@ -9,5 +9,6 @@ router.get('/', settingsController.getSettings);
 
 // Admin route to update settings
 router.put('/delivery-charge', auth, role('admin'), settingsController.updateDeliveryCharge);
+router.put('/banner-texts', auth, role('admin'), settingsController.updateBannerTexts);
 
 module.exports = router;

@@ -46,3 +46,25 @@ exports.updateDeliveryCharge = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
+// Admin: Update banner texts
+exports.updateBannerTexts = async (req, res) => {
+  try {
+    const { bannerTexts } = req.body;
+
+    if (!Array.isArray(bannerTexts)) {
+      return res.status(400).json({ message: 'Invalid banner texts format. Must be an array.' });
+    }
+
+    const updatedSetting = await Settings.findOneAndUpdate(
+      { key: 'bannerTexts' },
+      { value: bannerTexts },
+      { new: true, upsert: true }
+    );
+
+    res.json({ message: 'Banner texts updated successfully', bannerTexts: updatedSetting.value });
+  } catch (err) {
+    console.error("Update Banner Texts Error:", err);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};

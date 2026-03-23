@@ -6,7 +6,7 @@ import {
     Package, ClipboardList, ChefHat, Truck, CheckCircle, XCircle, Clock,
     MapPin, Phone, Mail, User, Eye, EyeOff, ToggleLeft, ToggleRight,
     Flame, Drumstick, CookingPot, ArrowRight, Pencil, X, Save, Tag, Percent,
-    RotateCcw, AlertTriangle, Settings, Plus, Upload, ImageIcon, Trash2, TrendingUp, DollarSign, Activity, Calendar
+    RotateCcw, AlertTriangle, Settings, Plus, Upload, ImageIcon, Trash2, TrendingUp, DollarSign, Activity, Calendar, FileText
 } from "lucide-react";
 
 const STATUS_FLOW = ['pending', 'confirmed', 'preparing', 'enroute', 'delivered', 'delivery_failed'];
@@ -143,7 +143,7 @@ const AdminDashboard = () => {
                                 : "bg-white text-gray-600 border border-gray-200 hover:border-orange-200 hover:text-orange-600"
                             }`}
                     >
-                        <Truck size={18} /> Delivery
+                        <Settings size={18} /> Settings
                     </button>
                     <button
                         onClick={() => setActiveTab("analytics")}
@@ -800,6 +800,13 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
 const SettingsPanel = () => {
     const [deliveryCharge, setDeliveryCharge] = useState("");
     const [originalCharge, setOriginalCharge] = useState("");
+    
+    // Banner State
+    const [bannerTexts, setBannerTexts] = useState([]);
+    const [originalBannerTexts, setOriginalBannerTexts] = useState([]);
+    const [newBannerText, setNewBannerText] = useState("");
+    const [savingBanner, setSavingBanner] = useState(false);
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -809,10 +816,14 @@ const SettingsPanel = () => {
 
     const fetchSettings = async () => {
         try {
-            const res = await axios.get("/settings?key=deliveryCharge");
-            const charge = res.data.deliveryCharge !== null ? res.data.deliveryCharge : 0;
+            const res = await axios.get("/settings"); // Fetch all settings
+            const charge = res.data.deliveryCharge !== null && res.data.deliveryCharge !== undefined ? res.data.deliveryCharge : 0;
             setDeliveryCharge(charge);
             setOriginalCharge(charge);
+            
+            const banners = res.data.bannerTexts || [];
+            setBannerTexts(banners);
+            setOriginalBannerTexts(banners);
         } catch (err) {
             toast.error("Failed to load settings");
         } finally {
@@ -820,7 +831,7 @@ const SettingsPanel = () => {
         }
     };
 
-    const handleSave = async () => {
+    const handleSaveDelivery = async () => {
         if (deliveryCharge === "" || isNaN(deliveryCharge) || Number(deliveryCharge) < 0) {
             toast.error("Please enter a valid non-negative number for delivery charge");
             return;
@@ -838,7 +849,34 @@ const SettingsPanel = () => {
         }
     };
 
-    const hasChanges = String(deliveryCharge) !== String(originalCharge);
+    // Banner handlers
+    const addBannerText = () => {
+        if (!newBannerText.trim()) return;
+        setBannerTexts([...bannerTexts, newBannerText.trim()]);
+        setNewBannerText("");
+    };
+
+    const removeBannerText = (index) => {
+        const updated = [...bannerTexts];
+        updated.splice(index, 1);
+        setBannerTexts(updated);
+    };
+
+    const handleSaveBanner = async () => {
+        setSavingBanner(true);
+        try {
+            const res = await axios.put("/settings/banner-texts", { bannerTexts });
+            toast.success(res.data.message);
+            setOriginalBannerTexts(res.data.bannerTexts);
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to update banner texts");
+        } finally {
+            setSavingBanner(false);
+        }
+    };
+
+    const hasChangesDelivery = String(deliveryCharge) !== String(originalCharge);
+    const hasChangesBanner = JSON.stringify(bannerTexts) !== JSON.stringify(originalBannerTexts);
 
     if (loading) {
         return (
@@ -883,7 +921,7 @@ const SettingsPanel = () => {
                 </div>
 
                 <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-100">
-                    {hasChanges && (
+                    {hasChangesDelivery && (
                         <button
                             onClick={() => setDeliveryCharge(originalCharge)}
                             className="px-6 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
@@ -892,10 +930,10 @@ const SettingsPanel = () => {
                         </button>
                     )}
                     <button
-                        onClick={handleSave}
-                        disabled={saving || !hasChanges}
+                        onClick={handleSaveDelivery}
+                        disabled={saving || !hasChangesDelivery}
                         className={`px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all 
-                            ${saving || !hasChanges 
+                            ${saving || !hasChangesDelivery 
                                 ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
                                 : "bg-gradient-to-r from-orange-500 to-red-600 text-white hover:shadow-lg cursor-pointer"}`}
                     >
@@ -907,7 +945,99 @@ const SettingsPanel = () => {
                         ) : (
                             <>
                                 <Save size={18} />
-                                Save Settings
+                                Save Delivery Settings
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Banner Settings Section */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-red-600">
+                        <FileText size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-800">Top Banner Settings</h2>
+                        <p className="text-sm text-gray-500">Manage the scrolling text below the website navigation.</p>
+                    </div>
+                </div>
+
+                <div className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Add New Banner Text</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={newBannerText}
+                                onChange={(e) => setNewBannerText(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') addBannerText(); }}
+                                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all font-medium text-gray-800"
+                                placeholder="e.g. 🍔 Free Delivery on orders above Rs.2000!"
+                            />
+                            <button
+                                onClick={addBannerText}
+                                disabled={!newBannerText.trim()}
+                                className={`px-6 py-3 rounded-xl font-bold transition-all flexitems-center gap-2
+                                    ${!newBannerText.trim() 
+                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
+                                    : "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 cursor-pointer"}`}
+                            >
+                                <Plus size={20} className="inline-block" /> Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                        <h3 className="text-sm font-bold text-gray-700 mb-3 block">Current Banner Texts ({bannerTexts.length})</h3>
+                        {bannerTexts.length === 0 ? (
+                            <p className="text-center text-gray-400 text-sm py-4 italic">No items configured. The banner will be hidden on the website.</p>
+                        ) : (
+                            <ul className="space-y-2">
+                                {bannerTexts.map((text, index) => (
+                                    <li key={index} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                                        <span className="text-sm font-medium text-gray-700 truncate mr-4">{text}</span>
+                                        <button 
+                                            onClick={() => removeBannerText(index)}
+                                            className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer shrink-0"
+                                            title="Remove text"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                </div>
+
+                <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-100">
+                    {hasChangesBanner && (
+                        <button
+                            onClick={() => setBannerTexts(originalBannerTexts)}
+                            className="px-6 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                        >
+                            Cancel Changes
+                        </button>
+                    )}
+                    <button
+                        onClick={handleSaveBanner}
+                        disabled={savingBanner || !hasChangesBanner}
+                        className={`px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all 
+                            ${savingBanner || !hasChangesBanner 
+                                ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
+                                : "bg-gradient-to-r from-red-500 to-orange-600 text-white hover:shadow-lg cursor-pointer"}`}
+                    >
+                        {savingBanner ? (
+                            <>
+                                <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <Save size={18} />
+                                Save Banner Settings
                             </>
                         )}
                     </button>
