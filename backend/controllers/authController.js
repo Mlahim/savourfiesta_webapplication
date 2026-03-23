@@ -63,7 +63,7 @@ exports.signup = async (req, res) => {
         });
     } catch (error) {
         console.error("Signup error:", error);
-        res.status(500).json({ message: "Signup failed", error: error.message });
+        res.status(500).json({ message: "Signup failed" });
     }
 };
 
@@ -105,7 +105,8 @@ exports.verifyEmail = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: "Verification failed", error: error.message });
+        console.error("Verification error:", error);
+        res.status(500).json({ message: "Verification failed" });
     }
 };
 
@@ -136,7 +137,8 @@ exports.resendOtp = async (req, res) => {
 
         res.status(200).json({ message: "OTP resent to your email" });
     } catch (error) {
-        res.status(500).json({ message: "Failed to resend OTP", error: error.message });
+        console.error("Resend OTP error:", error);
+        res.status(500).json({ message: "Failed to resend OTP" });
     }
 };
 
@@ -180,7 +182,8 @@ exports.login = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: "Login failed", error: error.message });
+        console.error("Login error:", error);
+        res.status(500).json({ message: "Login failed" });
     }
 };
 
@@ -212,7 +215,7 @@ exports.forgotPassword = async (req, res) => {
         res.status(200).json({ message: "OTP sent to your email" });
     } catch (error) {
         console.error("Forgot password error:", error);
-        res.status(500).json({ message: "Email could not be sent", error: error.message });
+        res.status(500).json({ message: "Email could not be sent" });
     }
 };
 
@@ -237,7 +240,8 @@ exports.resetPassword = async (req, res) => {
 
         res.status(200).json({ message: "Password reset successful" });
     } catch (error) {
-        res.status(500).json({ message: "Password reset failed", error: error.message });
+        console.error("Password reset error:", error);
+        res.status(500).json({ message: "Password reset failed" });
     }
 };
 
@@ -268,6 +272,7 @@ exports.resendResetOtp = async (req, res) => {
 
         res.status(200).json({ message: "OTP resent to your email" });
     } catch (error) {
-        res.status(500).json({ message: "Failed to resend OTP", error: error.message });
+        console.error("Resend reset OTP error:", error);
+        res.status(500).json({ message: "Failed to resend OTP" });
     }
 };

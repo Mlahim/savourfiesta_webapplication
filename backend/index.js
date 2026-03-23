@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const connectDb = require('./config/mongoDb');
 const seedMenu = require('./seed/menuSeed');
@@ -14,9 +16,38 @@ const settingsRoutes = require('./routes/settingsRoutes');
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+// Security headers
+app.use(helmet());
+
+// CORS — restrict to your frontend domain(s)
+const allowedOrigins = [
+  'https://savourfiesta-webapplication.vercel.app',
+  'http://localhost:5173'
+];
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman in dev)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
+// Body size limit — prevent DoS via large payloads
+app.use(express.json({ limit: '10kb' }));
 app.use('/uploads', express.static('uploads'));
+
+// Rate limiting on auth endpoints — prevent brute-force
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // max 15 requests per window per IP
+  message: { message: 'Too many attempts, please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 connectDb().then(() => {
   seedMenu(); // auto add products once
@@ -25,7 +56,7 @@ connectDb().then(() => {
 app.get("/", (req, res) => {
   res.send("Restaurant API is running 🚀");
 });
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/order', orderRoutes);

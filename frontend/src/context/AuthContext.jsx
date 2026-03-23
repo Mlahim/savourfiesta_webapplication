@@ -104,7 +104,6 @@ export const AuthProvider = ({ children }) => {
       }
 
       localStorage.setItem("guestCart", JSON.stringify(currentCart));
-      console.log("GUEST CART SAVED:", JSON.stringify(currentCart, null, 2)); // DEBUG
       updateCartCount();
       return true;
     }

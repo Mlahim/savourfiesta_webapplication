@@ -4,9 +4,20 @@ const Menu = require('../models/Menu');
 const User = require('../models/User');
 const sendEmail = require('../config/nodemailer');
 
+// Helper to escape HTML — prevents injection in emails
+const escapeHtml = (str) => {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 exports.createOrder = async (req, res) => {
   try {
-    const { items, delivery, totalAmount, deliveryCharge } = req.body;
+    const { items, delivery, deliveryCharge } = req.body;
 
     // Validate required delivery fields
     if (!delivery?.email || !delivery?.phone || !delivery?.address) {
@@ -17,37 +28,43 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Cart is empty.' });
     }
 
-    // Look up product names for each item
+    // SECURITY FIX: Look up real prices from DB and recalculate totalAmount server-side
     const orderItems = await Promise.all(items.map(async (item) => {
       const productId = item.productId?._id || item.productId;
-      let productName = item.productName || '';
+      let productName = '';
+      let serverPrice = 0;
 
-      // If no productName was sent from frontend, look it up
-      if (!productName && productId) {
+      if (productId) {
         try {
           const product = await Menu.findById(productId);
           if (product) {
             productName = product.productName;
+            serverPrice = product.productPrice; // Always use DB price
           }
         } catch (e) {
-          // Product might not exist anymore, use whatever we have
+          // Product might not exist anymore
         }
       }
 
       return {
         productId,
         productName,
-        quantity: item.quantity,
-        price: item.price || 0
+        quantity: item.quantity || 1,
+        price: serverPrice
       };
     }));
+
+    // SECURITY FIX: Server-side total calculation — never trust client totalAmount
+    const itemsTotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const safeDeliveryCharge = Number(deliveryCharge) >= 0 ? Number(deliveryCharge) : 0;
+    const calculatedTotal = itemsTotal + safeDeliveryCharge;
 
     const order = new Order({
       userId: req.user?.id || null,
       items: orderItems,
       delivery,
-      deliveryCharge: deliveryCharge || 0,
-      totalAmount,
+      deliveryCharge: safeDeliveryCharge,
+      totalAmount: calculatedTotal,
       status: 'pending'
     });
 
@@ -67,9 +84,11 @@ exports.createOrder = async (req, res) => {
       const admins = await User.find({ role: 'admin' });
       if (admins.length > 0) {
         const adminEmails = admins.map(a => a.email).join(', ');
+
+        // SECURITY FIX: HTML-escape all user-supplied data in emails
         const itemRows = orderItems.map(item =>
           `<tr>
-            <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${item.productName || 'N/A'}</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${escapeHtml(item.productName) || 'N/A'}</td>
             <td style="padding: 8px 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
             <td style="padding: 8px 12px; border-bottom: 1px solid #eee; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
           </tr>`
@@ -77,7 +96,7 @@ exports.createOrder = async (req, res) => {
 
         await sendEmail({
           to: adminEmails,
-          subject: `🛒 New Order #${order._id.toString().slice(-6).toUpperCase()} — $${totalAmount.toFixed(2)}`,
+          subject: `🛒 New Order #${order._id.toString().slice(-6).toUpperCase()} — $${calculatedTotal.toFixed(2)}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h1 style="color: #ea580c;">New Order Received!</h1>
@@ -95,19 +114,19 @@ exports.createOrder = async (req, res) => {
                 <tbody>${itemRows}</tbody>
               </table>
               <div style="margin-top: 12px; border-top: 1px solid #ccc; padding-top: 8px;">
-                <p style="color: #555; text-align: right; margin: 4px 0;">Delivery Charge: $${Number(deliveryCharge || 0).toFixed(2)}</p>
+                <p style="color: #555; text-align: right; margin: 4px 0;">Delivery Charge: $${safeDeliveryCharge.toFixed(2)}</p>
                 <p style="font-size: 18px; font-weight: bold; color: #ea580c; text-align: right; margin: 4px 0;">
-                  Total: $${totalAmount.toFixed(2)}
+                  Total: $${calculatedTotal.toFixed(2)}
                 </p>
               </div>
 
               <h3 style="margin-top: 24px; color: #333;">👤 Customer Info</h3>
-              <p style="color: #555; margin: 4px 0;"><strong>Name:</strong> ${delivery.name || 'N/A'}</p>
-              <p style="color: #555; margin: 4px 0;"><strong>Email:</strong> ${delivery.email}</p>
-              <p style="color: #555; margin: 4px 0;"><strong>Phone:</strong> ${delivery.phone}</p>
+              <p style="color: #555; margin: 4px 0;"><strong>Name:</strong> ${escapeHtml(delivery.name) || 'N/A'}</p>
+              <p style="color: #555; margin: 4px 0;"><strong>Email:</strong> ${escapeHtml(delivery.email)}</p>
+              <p style="color: #555; margin: 4px 0;"><strong>Phone:</strong> ${escapeHtml(delivery.phone)}</p>
 
               <h3 style="margin-top: 24px; color: #333;">📍 Delivery Address</h3>
-              <p style="color: #555;">${delivery.address}${delivery.landmark ? ' (Near: ' + delivery.landmark + ')' : ''}</p>
+              <p style="color: #555;">${escapeHtml(delivery.address)}${delivery.landmark ? ' (Near: ' + escapeHtml(delivery.landmark) + ')' : ''}</p>
             </div>
           `
         });
@@ -130,7 +149,7 @@ exports.getOrders = async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
-    console.error(err);
+    console.error("Get Orders Error:", err);
     res.status(500).json({ message: 'Server Error' });
   }
 };
@@ -138,7 +157,6 @@ exports.getOrders = async (req, res) => {
 // ADMIN: Get all orders
 exports.getAllOrders = async (req, res) => {
   try {
-    const User = require('../models/User');
     const orders = await Order.find()
       .populate('items.productId', 'productName productCategory productSubCategory')
       .sort({ createdAt: -1 });
@@ -155,7 +173,7 @@ exports.getAllOrders = async (req, res) => {
 
     res.json(ordersWithUser);
   } catch (err) {
-    console.error(err);
+    console.error("Get All Orders Error:", err);
     res.status(500).json({ message: 'Server Error' });
   }
 };
@@ -183,7 +201,7 @@ exports.updateOrderStatus = async (req, res) => {
 
     res.json({ message: `Order status updated to ${status}`, order });
   } catch (err) {
-    console.error(err);
+    console.error("Update Order Status Error:", err);
     res.status(500).json({ message: 'Server Error' });
   }
 };

@@ -6,7 +6,8 @@ exports.getAllMenu = async (req, res) => {
     const menu = await Menu.find();
     res.status(200).json(menu);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Get Menu Error:", error);
+    res.status(500).json({ message: "Failed to load menu" });
   }
 };
 
@@ -19,7 +20,8 @@ exports.getOneItem = async (req, res) => {
     }
     res.status(200).json(item);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Get Item Error:", error);
+    res.status(500).json({ message: "Failed to load item" });
   }
 };
 
@@ -53,7 +55,8 @@ exports.addItems = async (req, res) => {
     await newItem.save();
     res.status(201).json(newItem);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Add Item Error:", error);
+    res.status(500).json({ message: "Failed to add item" });
   }
 };
 
@@ -75,7 +78,8 @@ exports.updateItem = async (req, res) => {
     }
     res.status(200).json(item);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Update Item Error:", error);
+    res.status(500).json({ message: "Failed to update item" });
   }
 };
 
@@ -88,7 +92,8 @@ exports.deleteItem = async (req, res) => {
     }
     res.status(200).json({ message: "Item deleted" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Delete Item Error:", error);
+    res.status(500).json({ message: "Failed to delete item" });
   }
 };
 
@@ -108,7 +113,8 @@ exports.toggleAvailability = async (req, res) => {
       item
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Toggle Availability Error:", error);
+    res.status(500).json({ message: "Failed to toggle availability" });
   }
 };
 
@@ -146,6 +152,7 @@ exports.updatePrice = async (req, res) => {
     await item.save();
     res.status(200).json({ message: `Price updated for ${item.productName}`, item });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Update Price Error:", error);
+    res.status(500).json({ message: "Failed to update price" });
   }
 };
