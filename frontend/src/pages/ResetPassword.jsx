@@ -165,7 +165,7 @@ const ResetPassword = () => {
                                 onClick={() => setShowNewPassword(!showNewPassword)}
                                 className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
                             >
-                                {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                {showNewPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                             </button>
                         </div>
 
@@ -187,7 +187,7 @@ const ResetPassword = () => {
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
                             >
-                                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                {showConfirmPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                             </button>
                         </div>
                     </div>

@@ -920,11 +920,11 @@ const SettingsPanel = () => {
                     </div>
                 </div>
 
-                <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-100">
+                <div className="mt-8 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-6 border-t border-gray-100">
                     {hasChangesDelivery && (
                         <button
                             onClick={() => setDeliveryCharge(originalCharge)}
-                            className="px-6 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                            className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer text-center"
                         >
                             Cancel Changes
                         </button>
@@ -932,7 +932,7 @@ const SettingsPanel = () => {
                     <button
                         onClick={handleSaveDelivery}
                         disabled={saving || !hasChangesDelivery}
-                        className={`px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all 
+                        className={`w-full sm:w-auto px-8 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all 
                             ${saving || !hasChangesDelivery 
                                 ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
                                 : "bg-gradient-to-r from-orange-500 to-red-600 text-white hover:shadow-lg cursor-pointer"}`}
@@ -967,7 +967,7 @@ const SettingsPanel = () => {
                 <div className="space-y-6">
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Add New Banner Text</label>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                             <input
                                 type="text"
                                 value={newBannerText}
@@ -979,7 +979,7 @@ const SettingsPanel = () => {
                             <button
                                 onClick={addBannerText}
                                 disabled={!newBannerText.trim()}
-                                className={`px-6 py-3 rounded-xl font-bold transition-all flexitems-center gap-2
+                                className={`w-full sm:w-auto px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2
                                     ${!newBannerText.trim() 
                                     ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
                                     : "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 cursor-pointer"}`}
@@ -1012,11 +1012,11 @@ const SettingsPanel = () => {
                     </div>
                 </div>
 
-                <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-100">
+                <div className="mt-8 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-6 border-t border-gray-100">
                     {hasChangesBanner && (
                         <button
                             onClick={() => setBannerTexts(originalBannerTexts)}
-                            className="px-6 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                            className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer text-center"
                         >
                             Cancel Changes
                         </button>
@@ -1024,7 +1024,7 @@ const SettingsPanel = () => {
                     <button
                         onClick={handleSaveBanner}
                         disabled={savingBanner || !hasChangesBanner}
-                        className={`px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all 
+                        className={`w-full sm:w-auto px-8 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all 
                             ${savingBanner || !hasChangesBanner 
                                 ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
                                 : "bg-gradient-to-r from-red-500 to-orange-600 text-white hover:shadow-lg cursor-pointer"}`}
