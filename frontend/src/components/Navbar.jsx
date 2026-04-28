@@ -76,7 +76,7 @@ const Navbar = () => {
           {/* Brand Logo */}
           <div className="flex-shrink-0 flex items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0">
             <Link to="/" onClick={handleHomeClick} className="flex items-center">
-              <img src={getNavbarLogo("https://res.cloudinary.com/dhx8xzita/image/upload/v1771488476/hotel-menu/navbar_logo_v3.png")} alt="SavourFiesta Logo" className="h-20 w-auto object-contain mix-blend-multiply mt-6" loading="eager" fetchPriority="high" decoding="async" />
+              <img src="https://res.cloudinary.com/dhx8xzita/image/upload/v1771488476/hotel-menu/navbar_logo_v3.png" alt="SavourFiesta Logo" className="h-20 w-auto object-contain mix-blend-multiply mt-6" loading="eager" fetchPriority="high" decoding="async" />
             </Link>
           </div>
 
