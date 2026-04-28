@@ -1,13 +1,14 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { ShoppingCart, Plus, AlertTriangle } from "lucide-react";
+import { ShoppingCart, Plus, AlertTriangle, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import { getMenuCardImage } from "../utils/optimizeImage";
 import OptimizedImage from "./OptimizedImage";
 
 const MenuCard = ({ item }) => {
   const { addToCart } = useContext(AuthContext);
-  const [quantity, setQuantity] = React.useState(1);
+  const [quantity, setQuantity] = useState(1);
+  const [isAdded, setIsAdded] = useState(false);
   const isAvailable = item.available !== false;
 
   const handleAddToCart = async () => {
@@ -17,8 +18,9 @@ const MenuCard = ({ item }) => {
     }
     const success = await addToCart(item, quantity);
     if (success) {
-      toast.success(`${quantity}x ${item.productName} added to cart!`);
+      setIsAdded(true);
       setQuantity(1);
+      setTimeout(() => setIsAdded(false), 2000);
     } else {
       toast.error("Failed to add item.");
     }
@@ -101,10 +103,24 @@ const MenuCard = ({ item }) => {
             {isAvailable ? (
               <button
                 onClick={handleAddToCart}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 md:py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 active:scale-95 transition-all shadow-md hover:shadow-lg text-[10px] md:text-sm font-bold"
+                disabled={isAdded}
+                className={`w-full flex items-center justify-center gap-1.5 py-1.5 md:py-2 rounded-lg text-white transition-all shadow-md hover:shadow-lg text-[10px] md:text-sm font-bold ${
+                  isAdded 
+                    ? "bg-green-600 hover:bg-green-700 scale-105" 
+                    : "bg-orange-600 hover:bg-orange-700 active:scale-95"
+                }`}
               >
-                <ShoppingCart size={14} className="md:w-4 md:h-4" />
-                Add to Cart
+                {isAdded ? (
+                  <>
+                    <Check size={14} className="md:w-4 md:h-4" />
+                    Added to Cart
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart size={14} className="md:w-4 md:h-4" />
+                    Add to Cart
+                  </>
+                )}
               </button>
             ) : (
               <div className="w-full py-1.5 md:py-2 rounded-lg bg-red-50 border border-red-100 text-red-500 text-[10px] md:text-sm font-bold flex items-center justify-center gap-2">
