@@ -2,6 +2,8 @@ import React, { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { ShoppingCart, Plus, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
+import { getMenuCardImage } from "../utils/optimizeImage";
+import OptimizedImage from "./OptimizedImage";
 
 const MenuCard = ({ item }) => {
   const { addToCart } = useContext(AuthContext);
@@ -29,18 +31,16 @@ const MenuCard = ({ item }) => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-row md:flex-col h-32 md:h-full group">
       {/* Image Section */}
       <div className="relative overflow-hidden w-32 md:w-full flex-shrink-0 md:h-48">
-        <img
-          src={item.productUrl || `https://placehold.co/400x300?text=${encodeURIComponent(item.productName)}`}
+        <OptimizedImage
+          src={item.productUrl ? getMenuCardImage(item.productUrl) : `https://placehold.co/400x300?text=${encodeURIComponent(item.productName)}`}
           alt={item.productName}
-          loading="lazy"
-          className="w-full h-full object-contain p-2 mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = 'https://placehold.co/400x300?text=Food';
-          }}
+          fallbackText={item.productName}
+          className="w-full h-full"
+          style={{ mixBlendMode: "multiply" }}
+          rootMargin="300px"
         />
         {/* Category Badge */}
-        <div className="absolute top-2 left-2 bg-orange-500/90 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg">
+        <div className="absolute top-2 left-2 bg-orange-500/90 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg z-10">
           {item.productCategory}
         </div>
 

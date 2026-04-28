@@ -38,7 +38,20 @@ app.use(cors({
 
 // Body size limit — prevent DoS via large payloads
 app.use(express.json({ limit: '10kb' }));
-app.use('/uploads', express.static('uploads'));
+
+// Static file serving with aggressive caching (images won't change often)
+app.use('/uploads', express.static('uploads', {
+  maxAge: '7d',                // Browser cache for 7 days
+  etag: true,                  // Enable ETag for conditional requests
+  lastModified: true,          // Enable Last-Modified header
+  immutable: false,            // Allow revalidation after maxAge
+  setHeaders: (res, path) => {
+    // For images, set even more aggressive caching
+    if (path.match(/\.(jpg|jpeg|png|webp|avif|gif|svg)$/i)) {
+      res.setHeader('Cache-Control', 'public, max-age=2592000, stale-while-revalidate=86400'); // 30 days + 1 day stale
+    }
+  }
+}));
 
 // Rate limiting on auth endpoints — prevent brute-force
 const authLimiter = rateLimit({

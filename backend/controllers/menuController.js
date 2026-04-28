@@ -4,6 +4,9 @@ const Menu = require('../models/Menu');
 exports.getAllMenu = async (req, res) => {
   try {
     const menu = await Menu.find();
+    // Allow browsers/CDNs to cache menu data for 5 minutes
+    // stale-while-revalidate allows serving stale data while fetching fresh in background
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
     res.status(200).json(menu);
   } catch (error) {
     console.error("Get Menu Error:", error);

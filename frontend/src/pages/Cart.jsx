@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Trash2, ShoppingCart, CreditCard, ArrowRight, CornerUpLeft, Plus, Minus } from "lucide-react";
 import toast from "react-hot-toast";
+import { getCartThumbnail } from "../utils/optimizeImage";
 
 const Cart = () => {
   const { token, updateCartCount, cartItems, removeFromCart, updateQuantity } = React.useContext(AuthContext);
@@ -68,9 +69,11 @@ const Cart = () => {
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 md:w-16 md:h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                       <img
-                        src={item.productId?.productUrl || item.productUrl || `https://placehold.co/400x300?text=${encodeURIComponent(name)}`}
+                        src={getCartThumbnail(item.productId?.productUrl || item.productUrl) || `https://placehold.co/400x300?text=${encodeURIComponent(name)}`}
                         alt={name}
                         className="w-full h-full object-cover mix-blend-multiply"
+                        loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = `https://placehold.co/400x300?text=${encodeURIComponent(name)}`;

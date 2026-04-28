@@ -12,7 +12,10 @@ const storage = new CloudinaryStorage({
     params: {
         folder: 'hotel-menu',
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-        transformation: [{ width: 600, height: 400, crop: 'fill', quality: 'auto' }],
+        format: 'webp', // Convert all uploads to WebP for smaller file sizes
+        transformation: [
+            { width: 600, height: 400, crop: 'fill', quality: 'auto:good', fetch_format: 'auto' }
+        ],
     },
 });
 
