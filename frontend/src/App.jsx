@@ -23,6 +23,7 @@ import { Toaster } from "react-hot-toast";
 
 import Footer from "./components/Footer";
 import FloatingWhatsApp from "./components/FloatingWhatsApp";
+import FloatingCartTab from "./components/FloatingCartTab";
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -41,6 +42,7 @@ const Layout = ({ children }) => {
       {children}
       {showNavbar && <Footer />}
       <FloatingWhatsApp />
+      <FloatingCartTab />
     </>
   );
 };
