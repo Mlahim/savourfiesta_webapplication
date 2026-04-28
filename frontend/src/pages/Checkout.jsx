@@ -2,8 +2,7 @@ import React, { useState, useContext, useEffect } from "react";
 import axios from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Phone, Mail, User, Landmark, CreditCard, ShoppingBag, Banknote, CheckCircle2 } from "lucide-react";
-import toast from "react-hot-toast";
+import { ArrowLeft, MapPin, Phone, Mail, User, Landmark, CreditCard, ShoppingBag, Banknote, CheckCircle2, AlertTriangle } from "lucide-react";
 
 const Checkout = () => {
     const { token, cartItems, updateCartCount, clearCart } = useContext(AuthContext);
@@ -19,6 +18,8 @@ const Checkout = () => {
 
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
+    const [submitStatus, setSubmitStatus] = useState("idle");
+    const [submitMessage, setSubmitMessage] = useState("");
     const [deliveryCharge, setDeliveryCharge] = useState(0);
 
     // Fetch Delivery Settings
@@ -113,13 +114,18 @@ const Checkout = () => {
                 await clearCart();
             }
 
-            toast.success("Order placed successfully!");
-            navigate("/order-success");
+            setSubmitStatus("success");
+            setSubmitMessage("Order Placed Successfully!");
+            setTimeout(() => {
+                navigate("/order-success");
+            }, 1500);
         } catch (err) {
             console.error(err);
-            toast.error(err.response?.data?.message || "Failed to place order");
+            setSubmitStatus("error");
+            setSubmitMessage(err.response?.data?.message || "Failed to place order");
+            setTimeout(() => setSubmitStatus("idle"), 3000);
+            setSubmitting(false);
         }
-        setSubmitting(false);
     };
 
     return (
@@ -301,10 +307,22 @@ const Checkout = () => {
                                 <button
                                     type="submit"
                                     form="checkout-form"
-                                    disabled={submitting}
-                                    className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-[1.01] active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                    disabled={submitting || submitStatus === "success"}
+                                    className={`w-full text-white py-3.5 rounded-xl font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+                                        submitStatus === "success" ? "bg-green-600 shadow-green-500/50 scale-105" :
+                                        submitStatus === "error" ? "bg-red-600 shadow-red-500/50 animate-shake" :
+                                        "bg-gradient-to-r from-orange-500 to-red-600 shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-[1.01] active:scale-95"
+                                    } ${submitting && submitStatus !== 'success' ? 'opacity-70 cursor-not-allowed' : ''}`}
                                 >
-                                    <CreditCard size={20} /> {submitting ? "Placing Order..." : "Place Order"}
+                                    {submitStatus === "success" ? (
+                                        <><CheckCircle2 size={20} /> {submitMessage}</>
+                                    ) : submitStatus === "error" ? (
+                                        <><AlertTriangle size={20} /> {submitMessage}</>
+                                    ) : submitting ? (
+                                        <><CreditCard size={20} className="animate-pulse" /> Placing Order...</>
+                                    ) : (
+                                        <><CreditCard size={20} /> Place Order</>
+                                    )}
                                 </button>
                             </div>
                         </div>

@@ -2,8 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import axios from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Phone, MapPin, Save, LogOut, ArrowLeft, Edit3 } from "lucide-react";
-import toast from "react-hot-toast";
+import { User, Mail, Phone, MapPin, Save, LogOut, ArrowLeft, Edit3, CheckCircle2, AlertTriangle } from "lucide-react";
 
 const Profile = () => {
     const { token, logout } = useContext(AuthContext);
@@ -13,6 +12,8 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [submitStatus, setSubmitStatus] = useState("idle");
+    const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
         if (!token) {
@@ -29,7 +30,7 @@ const Profile = () => {
             setLoading(false);
         } catch (err) {
             console.error(err);
-            toast.error("Failed to load profile");
+            setErrorMessage("Failed to load profile");
             setLoading(false);
         }
     };
@@ -43,11 +44,15 @@ const Profile = () => {
                 address: profile.address,
             });
             setProfile(res.data);
-            setIsEditing(false);
-            toast.success("Profile updated successfully!");
+            setSubmitStatus("success");
+            setTimeout(() => {
+                setIsEditing(false);
+                setSubmitStatus("idle");
+            }, 1500);
         } catch (err) {
             console.error(err);
-            toast.error("Failed to update profile");
+            setSubmitStatus("error");
+            setTimeout(() => setSubmitStatus("idle"), 3000);
         }
         setSaving(false);
     };
@@ -61,6 +66,14 @@ const Profile = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+            </div>
+        );
+    }
+
+    if (errorMessage) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500 font-bold">
+                {errorMessage}
             </div>
         );
     }
@@ -184,10 +197,20 @@ const Profile = () => {
                         {isEditing && (
                             <button
                                 onClick={handleSave}
-                                disabled={saving}
-                                className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-[1.01] active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                disabled={saving || submitStatus === "success"}
+                                className={`w-full py-3 rounded-xl font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+                                    submitStatus === "success" ? "bg-green-600 text-white shadow-green-500/50 scale-105" :
+                                    submitStatus === "error" ? "bg-red-600 text-white shadow-red-500/50" :
+                                    "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-[1.01] active:scale-95"
+                                }`}
                             >
-                                <Save size={18} /> {saving ? "Saving..." : "Save Changes"}
+                                {submitStatus === "success" ? (
+                                    <><CheckCircle2 size={18} /> Saved!</>
+                                ) : submitStatus === "error" ? (
+                                    <><AlertTriangle size={18} /> Failed to save</>
+                                ) : (
+                                    <><Save size={18} /> {saving ? "Saving..." : "Save Changes"}</>
+                                )}
                             </button>
                         )}
                     </div>

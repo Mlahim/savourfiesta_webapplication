@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import axios from "../api/axios";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import toast from "react-hot-toast";
+import { User, Mail, Lock, Eye, EyeOff, UserPlus, CheckCircle2, AlertTriangle } from "lucide-react";
 
 const Signup = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState("idle");
+  const [submitMessage, setSubmitMessage] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) =>
@@ -16,19 +17,26 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      setSubmitStatus("error");
+      setSubmitMessage("Password must be at least 6 chars");
+      setTimeout(() => setSubmitStatus("idle"), 3000);
       return;
     }
+
     setIsLoading(true);
     try {
-      const res = await axios.post("/auth/signup", form);
-      toast.success("Verification code sent to your email!");
-      // Navigate to verify email page with email in state
-      navigate("/verify-email", { state: { email: form.email } });
+      await axios.post("/auth/register", form);
+      setSubmitStatus("success");
+      setSubmitMessage("Verification Code Sent!");
+      
+      setTimeout(() => {
+        navigate("/verify-email", { state: { email: form.email } });
+      }, 1500);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Error signing up");
-    } finally {
       setIsLoading(false);
+      setSubmitStatus("error");
+      setSubmitMessage(err.response?.data?.message || "Error signing up");
+      setTimeout(() => setSubmitStatus("idle"), 3000);
     }
   };
 
@@ -104,10 +112,21 @@ const Signup = () => {
           </div>
 
           <button
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-200 hover:shadow-orange-400 hover:-translate-y-1 active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+            type="submit"
+            disabled={isLoading || submitStatus === "success"}
+            className={`w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex justify-center items-center gap-2 ${
+              submitStatus === "success" ? "bg-green-600 shadow-green-500/50 scale-105" :
+              submitStatus === "error" ? "bg-red-600 shadow-red-500/50" :
+              "bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 shadow-orange-200 hover:shadow-orange-400 hover:-translate-y-1 active:scale-95"
+            }`}
           >
-            {isLoading ? "Sending verification..." : "Sign Up"}
+            {submitStatus === "success" ? (
+              <><CheckCircle2 size={20} /> {submitMessage}</>
+            ) : submitStatus === "error" ? (
+              <><AlertTriangle size={20} /> {submitMessage}</>
+            ) : (
+              <><UserPlus size={20} /> {isLoading ? "Creating Account..." : "Create Account"}</>
+            )}
           </button>
 
           <button

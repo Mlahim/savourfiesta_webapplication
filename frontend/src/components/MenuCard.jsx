@@ -1,7 +1,6 @@
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { ShoppingCart, Plus, AlertTriangle, Check } from "lucide-react";
-import toast from "react-hot-toast";
+import { ShoppingCart, Plus, AlertTriangle, Check, XCircle } from "lucide-react";
 import { getMenuCardImage } from "../utils/optimizeImage";
 import OptimizedImage from "./OptimizedImage";
 
@@ -9,20 +8,20 @@ const MenuCard = ({ item }) => {
   const { addToCart } = useContext(AuthContext);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+  const [isError, setIsError] = useState(false);
   const isAvailable = item.available !== false;
 
   const handleAddToCart = async () => {
-    if (!isAvailable) {
-      toast.error("This item is currently out of stock");
-      return;
-    }
+    if (!isAvailable) return;
+    
     const success = await addToCart(item, quantity);
     if (success) {
       setIsAdded(true);
       setQuantity(1);
       setTimeout(() => setIsAdded(false), 2000);
     } else {
-      toast.error("Failed to add item.");
+      setIsError(true);
+      setTimeout(() => setIsError(false), 2000);
     }
   };
 
@@ -103,10 +102,12 @@ const MenuCard = ({ item }) => {
             {isAvailable ? (
               <button
                 onClick={handleAddToCart}
-                disabled={isAdded}
+                disabled={isAdded || isError}
                 className={`w-full flex items-center justify-center gap-1.5 py-1.5 md:py-2 rounded-lg text-white transition-all shadow-md hover:shadow-lg text-[10px] md:text-sm font-bold ${
                   isAdded 
                     ? "bg-green-600 hover:bg-green-700 scale-105" 
+                    : isError
+                    ? "bg-red-600 hover:bg-red-700 scale-105 animate-shake"
                     : "bg-orange-600 hover:bg-orange-700 active:scale-95"
                 }`}
               >
@@ -114,6 +115,11 @@ const MenuCard = ({ item }) => {
                   <>
                     <Check size={14} className="md:w-4 md:h-4" />
                     Added to Cart
+                  </>
+                ) : isError ? (
+                  <>
+                    <XCircle size={14} className="md:w-4 md:h-4" />
+                    Failed
                   </>
                 ) : (
                   <>

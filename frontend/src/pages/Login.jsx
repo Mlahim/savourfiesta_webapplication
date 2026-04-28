@@ -1,13 +1,14 @@
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
-import toast from "react-hot-toast";
+import { Mail, Lock, User, Eye, EyeOff, LogIn, CheckCircle2, AlertTriangle } from "lucide-react";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState("idle");
+  const [submitMessage, setSubmitMessage] = useState("");
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
 
@@ -19,22 +20,27 @@ const Login = () => {
     setIsLoading(true);
     try {
       const loggedInUser = await login(form.email, form.password);
-      toast.success("Login successful!");
-      if (loggedInUser?.role === 'admin') {
-        navigate("/admin");
-      } else {
-        navigate("/");
-      }
+      setSubmitStatus("success");
+      setSubmitMessage("Login successful!");
+      
+      setTimeout(() => {
+        if (loggedInUser?.role === 'admin') {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      }, 1000);
     } catch (err) {
-      // If user needs to verify email, redirect them
-      if (err.response?.status === 403 && err.response?.data?.needsVerification) {
-        toast.error("Please verify your email first");
-        navigate("/verify-email", { state: { email: err.response.data.email } });
-        return;
-      }
-      toast.error(err.response?.data?.message || err.message || "Error logging in");
-    } finally {
       setIsLoading(false);
+      setSubmitStatus("error");
+      
+      if (err.response?.status === 403 && err.response?.data?.needsVerification) {
+        setSubmitMessage("Please verify your email first");
+        setTimeout(() => navigate("/verify-email", { state: { email: err.response.data.email } }), 2000);
+      } else {
+        setSubmitMessage(err.response?.data?.message || err.message || "Error logging in");
+        setTimeout(() => setSubmitStatus("idle"), 3000);
+      }
     }
   };
 
@@ -103,10 +109,21 @@ const Login = () => {
           </div>
 
           <button
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-200 hover:shadow-orange-400 hover:-translate-y-1 active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+            type="submit"
+            disabled={isLoading || submitStatus === "success"}
+            className={`w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex justify-center items-center gap-2 ${
+              submitStatus === "success" ? "bg-green-600 shadow-green-500/50 scale-105" :
+              submitStatus === "error" ? "bg-red-600 shadow-red-500/50" :
+              "bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 shadow-orange-200 hover:shadow-orange-400 hover:-translate-y-1 active:scale-95"
+            }`}
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {submitStatus === "success" ? (
+              <><CheckCircle2 size={20} /> {submitMessage}</>
+            ) : submitStatus === "error" ? (
+              <><AlertTriangle size={20} /> {submitMessage}</>
+            ) : (
+              <><LogIn size={20} /> {isLoading ? "Logging in..." : "Login"}</>
+            )}
           </button>
 
           <button
