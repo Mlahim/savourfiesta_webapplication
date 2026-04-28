@@ -105,7 +105,7 @@ const MenuCard = ({ item }) => {
                 disabled={isAdded || isError}
                 className={`w-full flex items-center justify-center gap-1.5 py-1.5 md:py-2 rounded-lg text-white transition-all shadow-md hover:shadow-lg text-[10px] md:text-sm font-bold ${
                   isAdded 
-                    ? "bg-green-600 hover:bg-green-700 scale-105" 
+                    ? "bg-orange-700 hover:bg-orange-800 scale-105 shadow-orange-500/40" 
                     : isError
                     ? "bg-red-600 hover:bg-red-700 scale-105 animate-shake"
                     : "bg-orange-600 hover:bg-orange-700 active:scale-95"

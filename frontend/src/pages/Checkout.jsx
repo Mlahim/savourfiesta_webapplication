@@ -309,7 +309,7 @@ const Checkout = () => {
                                     form="checkout-form"
                                     disabled={submitting || submitStatus === "success"}
                                     className={`w-full text-white py-3.5 rounded-xl font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
-                                        submitStatus === "success" ? "bg-green-600 shadow-green-500/50 scale-105" :
+                                        submitStatus === "success" ? "bg-gradient-to-r from-orange-600 to-red-700 shadow-orange-500/50 scale-105" :
                                         submitStatus === "error" ? "bg-red-600 shadow-red-500/50 animate-shake" :
                                         "bg-gradient-to-r from-orange-500 to-red-600 shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-[1.01] active:scale-95"
                                     } ${submitting && submitStatus !== 'success' ? 'opacity-70 cursor-not-allowed' : ''}`}

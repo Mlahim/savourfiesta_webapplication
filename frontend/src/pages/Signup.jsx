@@ -115,7 +115,7 @@ const Signup = () => {
             type="submit"
             disabled={isLoading || submitStatus === "success"}
             className={`w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex justify-center items-center gap-2 ${
-              submitStatus === "success" ? "bg-green-600 shadow-green-500/50 scale-105" :
+              submitStatus === "success" ? "bg-gradient-to-r from-orange-600 to-red-700 shadow-orange-500/50 scale-105" :
               submitStatus === "error" ? "bg-red-600 shadow-red-500/50" :
               "bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 shadow-orange-200 hover:shadow-orange-400 hover:-translate-y-1 active:scale-95"
             }`}

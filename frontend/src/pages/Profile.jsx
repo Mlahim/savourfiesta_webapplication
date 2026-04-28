@@ -199,7 +199,7 @@ const Profile = () => {
                                 onClick={handleSave}
                                 disabled={saving || submitStatus === "success"}
                                 className={`w-full py-3 rounded-xl font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
-                                    submitStatus === "success" ? "bg-green-600 text-white shadow-green-500/50 scale-105" :
+                                    submitStatus === "success" ? "bg-gradient-to-r from-orange-600 to-red-700 text-white shadow-orange-500/50 scale-105" :
                                     submitStatus === "error" ? "bg-red-600 text-white shadow-red-500/50" :
                                     "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-[1.01] active:scale-95"
                                 }`}
