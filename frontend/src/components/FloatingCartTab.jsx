@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { ShoppingBag, ArrowRight } from "lucide-react";
@@ -7,10 +7,40 @@ const FloatingCartTab = () => {
   const { cartItems, cartCount } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const [isFooterVisible, setIsFooterVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const footer = document.querySelector('footer');
+      if (footer) {
+        const rect = footer.getBoundingClientRect();
+        // If the top of the footer is less than or equal to window height, it's visible
+        if (rect.top <= window.innerHeight) {
+          setIsFooterVisible(true);
+        } else {
+          setIsFooterVisible(false);
+        }
+      } else {
+        // Fallback: check if reached bottom of page
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const documentHeight = document.documentElement.offsetHeight;
+        if (documentHeight - scrollPosition < 100) {
+          setIsFooterVisible(true);
+        } else {
+          setIsFooterVisible(false);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Don't show the floating tab on these pages
   const hideRoutes = ["/cart", "/checkout", "/order-success", "/login", "/signup"];
-  if (hideRoutes.includes(location.pathname) || cartCount === 0) {
+  if (hideRoutes.includes(location.pathname) || cartCount === 0 || isFooterVisible) {
     return null;
   }
 

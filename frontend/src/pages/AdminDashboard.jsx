@@ -6,7 +6,7 @@ import {
     Package, ClipboardList, ChefHat, Truck, CheckCircle, XCircle, Clock,
     MapPin, Phone, Mail, User, Eye, EyeOff, ToggleLeft, ToggleRight,
     Flame, Drumstick, CookingPot, ArrowRight, Pencil, X, Save, Tag, Percent,
-    RotateCcw, AlertTriangle, Settings, Plus, Upload, ImageIcon, Trash2, TrendingUp, DollarSign, Activity, Calendar, FileText
+    RotateCcw, AlertTriangle, Settings, Plus, Upload, ImageIcon, Trash2, TrendingUp, DollarSign, Activity, Calendar, FileText, ChevronDown, ChevronUp
 } from "lucide-react";
 
 const STATUS_FLOW = ['pending', 'confirmed', 'preparing', 'enroute', 'delivered', 'delivery_failed'];
@@ -174,7 +174,7 @@ const AdminDashboard = () => {
                         setMenuItems={setMenuItems}
                     />
                 ) : activeTab === "analytics" ? (
-                    <AnalyticsPanel orders={orders} menuItems={menuItems} />
+                    <AnalyticsPanel orders={orders} menuItems={menuItems} fetchOrders={fetchOrders} />
                 ) : (
                     <SettingsPanel />
                 )}
@@ -1050,10 +1050,26 @@ const SettingsPanel = () => {
 /* ============================================================
    ANALYTICS PANEL
    ============================================================ */
-const AnalyticsPanel = ({ orders, menuItems }) => {
+const AnalyticsPanel = ({ orders, menuItems, fetchOrders }) => {
     // Default to today's date in YYYY-MM-DD format for the input
     const today = new Date().toISOString().split('T')[0];
     const [selectedDate, setSelectedDate] = useState(today);
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
+
+    const handleResetAnalytics = async () => {
+        setIsResetting(true);
+        try {
+            const res = await axios.delete("/order/admin/analytics/reset");
+            toast.success(res.data.message);
+            setShowResetConfirm(false);
+            if (fetchOrders) fetchOrders();
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to reset analytics");
+        } finally {
+            setIsResetting(false);
+        }
+    };
 
     // 1. Filter orders that have been successfully delivered
     const deliveredOrders = orders.filter(o => o.status === 'delivered');
@@ -1068,16 +1084,24 @@ const AnalyticsPanel = ({ orders, menuItems }) => {
     // 3. Calculate Day-Level Key Metrics
     const dayTotalRevenue = ordersOnDate.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     const dayTotalOrders = ordersOnDate.length;
+    const dayTotalDeliveryCharges = ordersOnDate.reduce((sum, o) => sum + (o.deliveryCharge || 0), 0);
 
-    // 4. Aggregate Product Sales for the Selected Date
+    // State for product accordions
+    const [expandedProducts, setExpandedProducts] = useState({});
+
+    const toggleProduct = (productName) => {
+        setExpandedProducts(prev => ({
+            ...prev,
+            [productName]: !prev[productName]
+        }));
+    };
+
+    // Aggregate Product Sales for the Selected Date
     const productSalesMap = {};
     
     ordersOnDate.forEach(order => {
         order.items.forEach(item => {
-            // Figure out the product name (handles populated vs unpopulated product IDs)
             let productName = item.productName || item.productId?.productName || "Unknown Item";
-            
-            // If missing from order item, attempt to look it up in menuItems
             if (!item.productId?.productName) {
                 const menuItem = menuItems.find(m => m._id === (item.productId?._id || item.productId));
                 if (menuItem) productName = menuItem.productName;
@@ -1091,17 +1115,28 @@ const AnalyticsPanel = ({ orders, menuItems }) => {
                 productSalesMap[productName] = {
                     name: productName,
                     quantity: 0,
-                    totalAmount: 0
+                    totalAmount: 0,
+                    orderIds: new Set()
                 };
             }
             
             productSalesMap[productName].quantity += quantity;
             productSalesMap[productName].totalAmount += itemTotalAmount;
+            productSalesMap[productName].orderIds.add(order._id);
         });
     });
 
-    // Convert map to sorted array (highest revenue first)
-    const productSalesList = Object.values(productSalesMap).sort((a, b) => b.totalAmount - a.totalAmount);
+    // Convert map to sorted array (highest revenue first) and calculate DC
+    const productSalesList = Object.values(productSalesMap)
+        .map(p => {
+            let dcSum = 0;
+            p.orderIds.forEach(id => {
+                const o = ordersOnDate.find(order => order._id === id);
+                if (o) dcSum += (o.deliveryCharge || 0);
+            });
+            return { ...p, totalDc: dcSum };
+        })
+        .sort((a, b) => b.totalAmount - a.totalAmount);
 
     return (
         <div className="space-y-6">
@@ -1113,6 +1148,12 @@ const AnalyticsPanel = ({ orders, menuItems }) => {
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={() => setShowResetConfirm(true)}
+                        className="px-4 py-2.5 text-sm font-bold rounded-xl transition-colors bg-red-50 text-red-600 hover:bg-red-100 flex items-center gap-2"
+                    >
+                        <Trash2 size={16} /> Reset
+                    </button>
                     <button
                         onClick={() => setSelectedDate('all')}
                         className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-colors ${
@@ -1146,33 +1187,77 @@ const AnalyticsPanel = ({ orders, menuItems }) => {
                 </div>
             </div>
 
+            {/* Reset Confirmation Modal */}
+            {showResetConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl animate-in zoom-in-95">
+                        <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                            <AlertTriangle size={24} />
+                        </div>
+                        <h3 className="text-xl font-black text-gray-800 mb-2">Reset Analytics?</h3>
+                        <p className="text-gray-500 text-sm mb-6">
+                            This will permanently delete all past (completed, rejected, failed) orders from the database. Current active orders will be kept. Are you absolutely sure?
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowResetConfirm(false)}
+                                disabled={isResetting}
+                                className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleResetAnalytics}
+                                disabled={isResetting}
+                                className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors flex justify-center items-center gap-2"
+                            >
+                                {isResetting ? (
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    "Delete"
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Top Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
                         <p className="text-sm font-bold text-gray-500 mb-1">{selectedDate === 'all' ? 'Total Revenue' : 'Total Daily Revenue'}</p>
-                        <p className="text-3xl font-black text-gray-800">Rs.{dayTotalRevenue.toFixed(2)}</p>
+                        <p className="text-2xl lg:text-3xl font-black text-gray-800">Rs.{dayTotalRevenue.toFixed(2)}</p>
                     </div>
-                    <div className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">
-                        <DollarSign size={28} />
+                    <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 shrink-0">
+                        <DollarSign size={24} className="lg:w-7 lg:h-7" />
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
                         <p className="text-sm font-bold text-gray-500 mb-1">{selectedDate === 'all' ? 'Total Orders' : 'Total Daily Orders'}</p>
-                        <p className="text-3xl font-black text-gray-800">{dayTotalOrders}</p>
+                        <p className="text-2xl lg:text-3xl font-black text-gray-800">{dayTotalOrders}</p>
                     </div>
-                    <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
-                        <Package size={28} />
+                    <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 shrink-0">
+                        <Package size={24} className="lg:w-7 lg:h-7" />
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-bold text-gray-500 mb-1">Total Delivery Charges</p>
+                        <p className="text-2xl lg:text-3xl font-black text-gray-800">Rs.{dayTotalDeliveryCharges.toFixed(2)}</p>
+                    </div>
+                    <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-green-100 flex items-center justify-center text-green-500 shrink-0">
+                        <Truck size={24} className="lg:w-7 lg:h-7" />
                     </div>
                 </div>
             </div>
 
-            {/* Sales Data Table */}
+            {/* Sales Data Table (Accordions) */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                     <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <TrendingUp className="text-orange-500" size={20} /> Itemized Sales Report
+                        <TrendingUp className="text-orange-500" size={20} /> Detailed Sales Report
                     </h3>
                     <span className="text-sm font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                         {selectedDate === 'all' ? 'All Time' : new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -1188,44 +1273,65 @@ const AnalyticsPanel = ({ orders, menuItems }) => {
                         <p className="text-gray-500 mt-1">There are no delivered orders on this selected date.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm whitespace-nowrap">
-                            <thead className="bg-gray-50 text-gray-600 font-bold border-b border-gray-100">
-                                <tr>
-                                    <th scope="col" className="px-6 py-4 rounded-tl-xl text-left">Product Name</th>
-                                    <th scope="col" className="px-6 py-4 text-center">Total Quantity Sold</th>
-                                    <th scope="col" className="px-6 py-4 rounded-tr-xl text-right">Total Amount (Subtotal)</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {productSalesList.map((item, index) => (
-                                    <tr key={index} className="hover:bg-orange-50/30 transition-colors">
-                                        <td className="px-6 py-4 font-bold text-gray-800">
-                                            {item.name}
-                                        </td>
-                                        <td className="px-6 py-4 text-center font-bold text-gray-600">
-                                            {item.quantity} <span className="text-xs text-gray-400 font-normal ml-1">items</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right font-black text-gray-800">
-                                            Rs.{item.totalAmount.toFixed(2)}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                            <tfoot className="bg-orange-50/50 border-t-2 border-orange-100">
-                                <tr>
-                                    <td className="px-6 py-5 font-black text-gray-800 text-lg uppercase tracking-wide">
-                                        Grand Total
-                                    </td>
-                                    <td className="px-6 py-5 text-center font-bold text-orange-600">
-                                        {productSalesList.reduce((sum, item) => sum + item.quantity, 0)} <span className="text-sm font-normal ml-1 text-orange-500/70">items total</span>
-                                    </td>
-                                    <td className="px-6 py-5 text-right font-black text-orange-600 text-xl">
-                                        Rs.{dayTotalRevenue.toFixed(2)}
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                    <div className="divide-y divide-gray-100">
+                        {productSalesList.map((product, idx) => {
+                            const isExpanded = expandedProducts[product.name];
+                            
+                            return (
+                                <div key={idx} className="flex flex-col">
+                                    <div 
+                                        onClick={() => toggleProduct(product.name)}
+                                        className="p-4 sm:p-6 hover:bg-orange-50/30 transition-colors cursor-pointer flex items-center justify-between gap-4"
+                                    >
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-gray-800 text-lg">
+                                                {product.name}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-4 sm:gap-6">
+                                            <span className="font-black text-gray-800 text-lg">
+                                                Rs.{product.totalAmount.toFixed(2)}
+                                            </span>
+                                            <div className="text-gray-400 bg-gray-50 p-1.5 rounded-lg">
+                                                {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Expanded Content */}
+                                    {isExpanded && (
+                                        <div className="px-4 sm:px-6 pb-6 pt-2 bg-gray-50/50 border-t border-gray-50 animate-in fade-in slide-in-from-top-2">
+                                            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Product Sales Summary</h4>
+                                                <ul className="space-y-3 text-sm">
+                                                    <li className="flex justify-between items-center">
+                                                        <div className="flex items-center gap-2 font-bold text-gray-700">
+                                                            <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-md text-xs">{product.quantity}x</span>
+                                                            Total Quantity Sold
+                                                        </div>
+                                                        <div className="font-semibold text-gray-600">
+                                                            Rs.{product.totalAmount.toFixed(2)}
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                                
+                                                <div className="mt-4 pt-4 border-t border-dashed border-gray-200">
+                                                    <div className="flex justify-between items-center text-sm">
+                                                        <div className="flex items-center gap-2 font-bold text-gray-600">
+                                                            <Truck size={16} className="text-gray-400" />
+                                                            Total Delivery Charges (from associated orders)
+                                                        </div>
+                                                        <div className="font-semibold text-gray-600">
+                                                            Rs.{product.totalDc.toFixed(2)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>

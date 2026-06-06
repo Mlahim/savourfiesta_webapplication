@@ -25,6 +25,7 @@ const optionalAuth = async (req, res, next) => {
 
 // ADMIN routes (must be before /:id routes)
 router.get('/admin/all', auth, role('admin'), order.getAllOrders);
+router.delete('/admin/analytics/reset', auth, role('admin'), order.resetAnalytics);
 router.put('/admin/:id/status', auth, role('admin'), order.updateOrderStatus);
 
 // Customer routes

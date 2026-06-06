@@ -205,3 +205,16 @@ exports.updateOrderStatus = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
+// ADMIN: Reset analytics (Delete past orders)
+exports.resetAnalytics = async (req, res) => {
+  try {
+    const result = await Order.deleteMany({
+      status: { $in: ['delivered', 'rejected', 'delivery_failed'] }
+    });
+    res.json({ message: `Successfully deleted ${result.deletedCount} past orders.` });
+  } catch (err) {
+    console.error("Reset Analytics Error:", err);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
