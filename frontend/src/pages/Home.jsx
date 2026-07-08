@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Flame, Drumstick, CookingPot, Package, Utensils, ChevronLeft, ChevronRight } from "lucide-react";
 import HeroSlider from "../components/HeroSlider";
+import MenuCardSkeleton from "../components/MenuCardSkeleton";
 
 
 const Home = () => {
@@ -156,9 +157,19 @@ const Home = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <div className="text-gray-400 text-lg">Loading menu items...</div>
+          <div className="space-y-12">
+            <div>
+              <div className="flex items-center gap-3 mb-6 animate-pulse">
+                <div className="h-px flex-1 bg-gray-200"></div>
+                <div className="h-8 w-32 bg-gray-200 rounded-full border border-gray-100"></div>
+                <div className="h-px flex-1 bg-gray-200"></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <MenuCardSkeleton key={index} />
+                ))}
+              </div>
+            </div>
           </div>
         ) : filteredItems.length > 0 ? (
           <div className="space-y-12">

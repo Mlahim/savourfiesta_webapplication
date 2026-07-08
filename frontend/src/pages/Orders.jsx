@@ -90,8 +90,31 @@ const Orders = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+      <div className="min-h-screen bg-gray-50 p-6 pb-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="h-10 w-48 bg-gray-200 rounded-lg animate-pulse mb-8"></div>
+          <div className="space-y-6">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+                <div className="px-6 py-4 border-b border-gray-50 flex flex-col sm:flex-row justify-between gap-2">
+                  <div>
+                    <div className="h-5 w-32 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 w-24 bg-gray-200 rounded"></div>
+                  </div>
+                  <div className="h-6 w-20 bg-gray-200 rounded"></div>
+                </div>
+                <div className="px-6 py-4 bg-gray-50/50 flex gap-2 overflow-hidden">
+                  {Array.from({ length: 5 }).map((_, stepIdx) => (
+                    <div key={stepIdx} className="flex flex-col items-center flex-1">
+                      <div className="w-7 h-7 rounded-full bg-gray-200 mb-1"></div>
+                      <div className="h-2 w-12 bg-gray-200 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
 

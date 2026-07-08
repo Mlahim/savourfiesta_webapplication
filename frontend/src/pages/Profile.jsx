@@ -64,8 +64,24 @@ const Profile = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+            <div className="min-h-screen bg-gray-50 py-8 px-4">
+                <div className="max-w-2xl mx-auto">
+                    <div className="w-32 h-6 bg-gray-200 rounded animate-pulse mb-6"></div>
+                    <div className="bg-gray-200 rounded-2xl h-36 mb-6 shadow-sm animate-pulse"></div>
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <div className="w-32 h-6 bg-gray-200 rounded"></div>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            {Array.from({ length: 4 }).map((_, i) => (
+                                <div key={i}>
+                                    <div className="w-24 h-4 bg-gray-200 rounded mb-2"></div>
+                                    <div className="w-full h-12 bg-gray-100 rounded-xl"></div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }

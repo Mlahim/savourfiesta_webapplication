@@ -96,8 +96,19 @@ const AdminOrdersList = () => {
 
             <div className="max-w-6xl mx-auto px-4 mt-8">
                 {loading ? (
-                    <div className="flex justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+                    <div className="space-y-4">
+                        {Array.from({ length: 4 }).map((_, idx) => (
+                            <div key={idx} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex justify-between items-center animate-pulse">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-gray-200 rounded-xl"></div>
+                                    <div>
+                                        <div className="h-5 w-32 bg-gray-200 rounded mb-2"></div>
+                                        <div className="h-3 w-48 bg-gray-200 rounded"></div>
+                                    </div>
+                                </div>
+                                <div className="h-6 w-24 bg-gray-200 rounded"></div>
+                            </div>
+                        ))}
                     </div>
                 ) : orders.length === 0 ? (
                     <div className="text-center py-24 bg-white rounded-3xl border border-gray-100 shadow-sm">

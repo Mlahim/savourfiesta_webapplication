@@ -158,8 +158,22 @@ const AdminDashboard = () => {
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+                    <div className="space-y-6">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between gap-4 animate-pulse">
+                            <div className="h-6 bg-gray-200 rounded w-48 mb-2"></div>
+                            <div className="h-8 bg-gray-200 rounded-xl w-40"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {Array.from({ length: 4 }).map((_, idx) => (
+                                <div key={idx} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 animate-pulse h-[140px] flex flex-col justify-between">
+                                    <div className="flex items-start justify-between">
+                                        <div className="w-12 h-12 bg-gray-200 rounded-xl"></div>
+                                        <div className="w-10 h-8 bg-gray-200 rounded"></div>
+                                    </div>
+                                    <div className="w-24 h-5 bg-gray-200 rounded"></div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 ) : activeTab === "orders" ? (
                     <OrdersPanel
