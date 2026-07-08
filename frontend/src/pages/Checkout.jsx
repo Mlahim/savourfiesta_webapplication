@@ -165,7 +165,7 @@ const Checkout = () => {
                                         value={form.name}
                                         onChange={handleChange}
                                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition-all text-gray-800"
-                                        placeholder="John Doe"
+                                        placeholder="Ali Raza"
                                     />
                                 </div>
 
@@ -180,7 +180,7 @@ const Checkout = () => {
                                         value={form.email}
                                         onChange={handleChange}
                                         className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition-all text-gray-800 ${errors.email ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
-                                        placeholder="you@example.com"
+                                        placeholder="ali@example.com"
                                     />
                                     {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                                 </div>
