@@ -70,7 +70,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-white/90 backdrop-blur-lg border-b-[3px] border-orange-100/80">
+    <nav className="bg-white/90 backdrop-blur-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative flex justify-between h-16 items-center">
           {/* Brand Logo */}
