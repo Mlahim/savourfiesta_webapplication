@@ -1,29 +1,40 @@
-const nodemailer = require('nodemailer');
-
-const transporter = nodemailer.createTransport({
-    host: process.env.MAILTRAP_HOST,
-    port: process.env.MAILTRAP_PORT,
-    auth: {
-        user: process.env.MAILTRAP_USER,
-        pass: process.env.MAILTRAP_PASS
-    }
-});
-
 const sendEmail = async (options) => {
     try {
-        const mailOptions = {
-            from: process.env.MAIL_FROM || 'Savour Fiesta <noreply@yourdomain.com>',
-            to: options.to,
+        const fromEmail = "noreply@savourfiesta.shop";
+        const fromName = "Savour Fiesta";
+
+        // Support single email or comma-separated emails
+        const toList = options.to.split(',').map(e => ({ email: e.trim() }));
+
+        const payload = {
+            from: { email: fromEmail, name: fromName },
+            to: toList,
             subject: options.subject,
-            text: options.text,
-            html: options.html
+            text: options.text || "",
+            html: options.html || ""
         };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent: %s', info.messageId);
-        return info;
+        // Bypasses Render's SMTP port block by using standard HTTPS (Port 443)
+        const response = await fetch('https://send.api.mailtrap.io/api/send', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.MAILTRAP_PASS}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+            console.error('Mailtrap API Error:', data);
+            throw new Error(`Email failed: ${JSON.stringify(data)}`);
+        }
+
+        console.log('Email sent successfully via API:', data);
+        return data;
     } catch (error) {
-        console.error('Error sending email:', error);
+        console.error('Error sending email via HTTP:', error);
         throw new Error('Email could not be sent');
     }
 };
