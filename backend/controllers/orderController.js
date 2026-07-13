@@ -82,21 +82,24 @@ exports.createOrder = async (req, res) => {
     // Send email notification to admin(s) — fire-and-forget
     try {
       const admins = await User.find({ role: 'admin' });
-      if (admins.length > 0) {
-        const adminEmails = admins.map(a => a.email).join(', ');
+      const adminEmailsList = admins.map(a => a.email);
+      if (!adminEmailsList.includes('savourfiestaofficial@gmail.com')) {
+        adminEmailsList.push('savourfiestaofficial@gmail.com');
+      }
+      const adminEmails = adminEmailsList.join(', ');
 
-        // SECURITY FIX: HTML-escape all user-supplied data in emails
+      // SECURITY FIX: HTML-escape all user-supplied data in emails
         const itemRows = orderItems.map(item =>
           `<tr>
             <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${escapeHtml(item.productName) || 'N/A'}</td>
             <td style="padding: 8px 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-            <td style="padding: 8px 12px; border-bottom: 1px solid #eee; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #eee; text-align: right;">Rs.${(item.price * item.quantity).toFixed(2)}</td>
           </tr>`
         ).join('');
 
         await sendEmail({
           to: adminEmails,
-          subject: `🛒 New Order #${order._id.toString().slice(-6).toUpperCase()} — $${calculatedTotal.toFixed(2)}`,
+          subject: `🛒 New Order #${order._id.toString().slice(-6).toUpperCase()} — Rs.${calculatedTotal.toFixed(2)}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h1 style="color: #ea580c;">New Order Received!</h1>
@@ -114,9 +117,9 @@ exports.createOrder = async (req, res) => {
                 <tbody>${itemRows}</tbody>
               </table>
               <div style="margin-top: 12px; border-top: 1px solid #ccc; padding-top: 8px;">
-                <p style="color: #555; text-align: right; margin: 4px 0;">Delivery Charge: $${safeDeliveryCharge.toFixed(2)}</p>
+                <p style="color: #555; text-align: right; margin: 4px 0;">Delivery Charge: Rs.${safeDeliveryCharge.toFixed(2)}</p>
                 <p style="font-size: 18px; font-weight: bold; color: #ea580c; text-align: right; margin: 4px 0;">
-                  Total: $${calculatedTotal.toFixed(2)}
+                  Total: Rs.${calculatedTotal.toFixed(2)}
                 </p>
               </div>
 
@@ -130,7 +133,6 @@ exports.createOrder = async (req, res) => {
             </div>
           `
         });
-      }
     } catch (emailErr) {
       console.error("Admin notification email failed:", emailErr.message);
     }

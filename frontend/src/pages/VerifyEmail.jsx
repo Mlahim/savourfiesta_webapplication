@@ -116,7 +116,7 @@ const VerifyEmail = () => {
                         </div>
                         <input
                             type="text"
-                            placeholder="Enter 6-digit OTP"
+                            placeholder="6-digit OTP"
                             value={otp}
                             onChange={(e) => setOtp(e.target.value)}
                             className="w-full bg-white/50 border-2 border-gray-100 pl-12 p-4 rounded-2xl focus:border-orange-500 focus:bg-white outline-none transition-all duration-300 shadow-sm tracking-widest text-lg font-bold text-center"

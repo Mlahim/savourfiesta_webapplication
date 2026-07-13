@@ -29,7 +29,7 @@ exports.signup = async (req, res) => {
             existingUser.name = name;
             existingUser.password = hashedPassword;
             existingUser.otp = hashOtp(otp);
-            existingUser.otpExpires = Date.now() + 60 * 1000;
+            existingUser.otpExpires = Date.now() + 5 * 60 * 1000;
             await existingUser.save();
         } else {
             // Create unverified user
@@ -40,7 +40,7 @@ exports.signup = async (req, res) => {
                 role: 'user',
                 isVerified: false,
                 otp: hashOtp(otp),
-                otpExpires: Date.now() + 60 * 1000
+                otpExpires: Date.now() + 5 * 60 * 1000
             });
             await newUser.save();
         }
@@ -52,8 +52,11 @@ exports.signup = async (req, res) => {
             html: `
                 <h1>Email Verification</h1>
                 <p>Thank you for signing up! Your verification code is:</p>
-                <h2 style="color: #ea580c; letter-spacing: 5px;">${otp}</h2>
-                <p>This code will expire in 60 seconds.</p>
+                <div style="background-color: #f1f5f9; padding: 15px 25px; border-radius: 8px; display: inline-block; user-select: all; -webkit-user-select: all; -moz-user-select: all; -ms-user-select: all; border: 2px dashed #cbd5e1; margin: 10px 0; cursor: pointer;" title="Click to select">
+                    <h2 style="margin: 0; color: #ea580c; letter-spacing: 8px; font-family: monospace;">${otp}</h2>
+                </div>
+                <p style="font-size: 13px; color: #64748b; margin-top: 0;">(Tap or click the code above to easily select and copy it)</p>
+                <p>This code will expire in 5 minutes.</p>
             `
         });
 
@@ -121,7 +124,7 @@ exports.resendOtp = async (req, res) => {
 
         const otp = generateOtp();
         user.otp = hashOtp(otp);
-        user.otpExpires = Date.now() + 60 * 1000;
+        user.otpExpires = Date.now() + 5 * 60 * 1000;
         await user.save();
 
         await sendEmail({
@@ -130,8 +133,11 @@ exports.resendOtp = async (req, res) => {
             html: `
                 <h1>Email Verification</h1>
                 <p>Your new verification code is:</p>
-                <h2 style="color: #ea580c; letter-spacing: 5px;">${otp}</h2>
-                <p>This code will expire in 60 seconds.</p>
+                <div style="background-color: #f1f5f9; padding: 15px 25px; border-radius: 8px; display: inline-block; user-select: all; -webkit-user-select: all; -moz-user-select: all; -ms-user-select: all; border: 2px dashed #cbd5e1; margin: 10px 0; cursor: pointer;" title="Click to select">
+                    <h2 style="margin: 0; color: #ea580c; letter-spacing: 8px; font-family: monospace;">${otp}</h2>
+                </div>
+                <p style="font-size: 13px; color: #64748b; margin-top: 0;">(Tap or click the code above to easily select and copy it)</p>
+                <p>This code will expire in 5 minutes.</p>
             `
         });
 
@@ -198,7 +204,7 @@ exports.forgotPassword = async (req, res) => {
 
         const otp = generateOtp();
         user.resetPasswordToken = hashOtp(otp);
-        user.resetPasswordExpires = Date.now() + 60 * 1000;
+        user.resetPasswordExpires = Date.now() + 5 * 60 * 1000;
         await user.save();
 
         await sendEmail({
@@ -207,8 +213,11 @@ exports.forgotPassword = async (req, res) => {
             html: `
                 <h1>Password Reset OTP</h1>
                 <p>You requested a password reset. Your OTP code is:</p>
-                <h2 style="color: #ea580c; letter-spacing: 5px;">${otp}</h2>
-                <p>This code will expire in 60 seconds.</p>
+                <div style="background-color: #f1f5f9; padding: 15px 25px; border-radius: 8px; display: inline-block; user-select: all; -webkit-user-select: all; -moz-user-select: all; -ms-user-select: all; border: 2px dashed #cbd5e1; margin: 10px 0; cursor: pointer;" title="Click to select">
+                    <h2 style="margin: 0; color: #ea580c; letter-spacing: 8px; font-family: monospace;">${otp}</h2>
+                </div>
+                <p style="font-size: 13px; color: #64748b; margin-top: 0;">(Tap or click the code above to easily select and copy it)</p>
+                <p>This code will expire in 5 minutes.</p>
             `
         });
 
@@ -256,7 +265,7 @@ exports.resendResetOtp = async (req, res) => {
 
         const otp = generateOtp();
         user.resetPasswordToken = hashOtp(otp);
-        user.resetPasswordExpires = Date.now() + 60 * 1000;
+        user.resetPasswordExpires = Date.now() + 5 * 60 * 1000;
         await user.save();
 
         await sendEmail({
@@ -265,8 +274,11 @@ exports.resendResetOtp = async (req, res) => {
             html: `
                 <h1>Password Reset OTP</h1>
                 <p>Your new password reset code is:</p>
-                <h2 style="color: #ea580c; letter-spacing: 5px;">${otp}</h2>
-                <p>This code will expire in 60 seconds.</p>
+                <div style="background-color: #f1f5f9; padding: 15px 25px; border-radius: 8px; display: inline-block; user-select: all; -webkit-user-select: all; -moz-user-select: all; -ms-user-select: all; border: 2px dashed #cbd5e1; margin: 10px 0; cursor: pointer;" title="Click to select">
+                    <h2 style="margin: 0; color: #ea580c; letter-spacing: 8px; font-family: monospace;">${otp}</h2>
+                </div>
+                <p style="font-size: 13px; color: #64748b; margin-top: 0;">(Tap or click the code above to easily select and copy it)</p>
+                <p>This code will expire in 5 minutes.</p>
             `
         });
 

@@ -69,7 +69,7 @@ connectDb().then(() => {
 app.get("/", (req, res) => {
   res.send("Restaurant API is running 🚀");
 });
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authRoutes); // authLimiter temporarily removed
 app.use('/api/menu', menuRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/order', orderRoutes);

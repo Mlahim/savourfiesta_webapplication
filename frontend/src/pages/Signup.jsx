@@ -25,7 +25,7 @@ const Signup = () => {
 
     setIsLoading(true);
     try {
-      await axios.post("/auth/register", form);
+      await axios.post("/auth/signup", form);
       setSubmitStatus("success");
       setSubmitMessage("Verification Code Sent!");
       
@@ -109,24 +109,20 @@ const Signup = () => {
                 {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
               </button>
             </div>
+            
+            {submitStatus === "error" && (
+              <p className="text-red-500 text-sm font-medium pl-2 mt-2">
+                {submitMessage}
+              </p>
+            )}
           </div>
 
           <button
             type="submit"
             disabled={isLoading || submitStatus === "success"}
-            className={`w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex justify-center items-center gap-2 ${
-              submitStatus === "success" ? "bg-gradient-to-r from-orange-600 to-red-700 shadow-orange-500/50 scale-105" :
-              submitStatus === "error" ? "bg-red-600 shadow-red-500/50" :
-              "bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 shadow-orange-200 hover:shadow-orange-400 hover:-translate-y-1 active:scale-95"
-            }`}
+            className="w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 shadow-orange-200 hover:shadow-orange-400 hover:-translate-y-1 active:scale-95"
           >
-            {submitStatus === "success" ? (
-              <><CheckCircle2 size={20} /> {submitMessage}</>
-            ) : submitStatus === "error" ? (
-              <><AlertTriangle size={20} /> {submitMessage}</>
-            ) : (
-              <><UserPlus size={20} /> {isLoading ? "Creating Account..." : "Create Account"}</>
-            )}
+            <UserPlus size={20} /> {isLoading ? "Creating Account..." : "Create Account"}
           </button>
 
           <button

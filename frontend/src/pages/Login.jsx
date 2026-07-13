@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-hot-toast";
 import { Mail, Lock, User, Eye, EyeOff, LogIn, CheckCircle2, AlertTriangle } from "lucide-react";
 
 const Login = () => {
@@ -22,6 +23,7 @@ const Login = () => {
       const loggedInUser = await login(form.email, form.password);
       setSubmitStatus("success");
       setSubmitMessage("Login successful!");
+      toast.success("Login successful!", { position: "top-right" });
       
       setTimeout(() => {
         if (loggedInUser?.role === 'admin') {
@@ -36,9 +38,11 @@ const Login = () => {
       
       if (err.response?.status === 403 && err.response?.data?.needsVerification) {
         setSubmitMessage("Please verify your email first");
+        toast.error("Please verify your email first", { position: "top-right" });
         setTimeout(() => navigate("/verify-email", { state: { email: err.response.data.email } }), 2000);
       } else {
-        setSubmitMessage(err.response?.data?.message || err.message || "Error logging in");
+        const errorMsg = err.response?.data?.message || err.message || "Error logging in";
+        setSubmitMessage(errorMsg);
         setTimeout(() => setSubmitStatus("idle"), 3000);
       }
     }
@@ -97,6 +101,12 @@ const Login = () => {
                 {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
               </button>
             </div>
+            
+            {submitStatus === "error" && submitMessage !== "Please verify your email first" && (
+              <p className="text-red-500 text-sm font-medium pl-2 mt-2">
+                {submitMessage}
+              </p>
+            )}
           </div>
 
           <div className="text-right -mt-2">
@@ -111,19 +121,9 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading || submitStatus === "success"}
-            className={`w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex justify-center items-center gap-2 ${
-              submitStatus === "success" ? "bg-gradient-to-r from-orange-600 to-red-700 shadow-orange-500/50 scale-105" :
-              submitStatus === "error" ? "bg-red-600 shadow-red-500/50" :
-              "bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 shadow-orange-200 hover:shadow-orange-400 hover:-translate-y-1 active:scale-95"
-            }`}
+            className="w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 shadow-orange-200 hover:shadow-orange-400 hover:-translate-y-1 active:scale-95"
           >
-            {submitStatus === "success" ? (
-              <><CheckCircle2 size={20} /> {submitMessage}</>
-            ) : submitStatus === "error" ? (
-              <><AlertTriangle size={20} /> {submitMessage}</>
-            ) : (
-              <><LogIn size={20} /> {isLoading ? "Logging in..." : "Login"}</>
-            )}
+            <LogIn size={20} /> {isLoading ? "Logging in..." : "Login"}
           </button>
 
           <button

@@ -2,26 +2,29 @@ const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
     host: process.env.MAILTRAP_HOST,
-    port: parseInt(process.env.MAILTRAP_PORT) || 2525,
+    port: process.env.MAILTRAP_PORT,
     auth: {
         user: process.env.MAILTRAP_USER,
         pass: process.env.MAILTRAP_PASS
     }
 });
 
-const sendEmail = async ({ to, subject, html }) => {
+const sendEmail = async (options) => {
     try {
-        const info = await transporter.sendMail({
-            from: '"SavourFiesta" <noreply@savourfiesta.com>',
-            to,
-            subject,
-            html
-        });
-        console.log("Email sent:", info.messageId);
+        const mailOptions = {
+            from: process.env.MAIL_FROM || 'Savour Fiesta <noreply@yourdomain.com>',
+            to: options.to,
+            subject: options.subject,
+            text: options.text,
+            html: options.html
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent: %s', info.messageId);
         return info;
     } catch (error) {
-        console.error("Error sending email:", error.message);
-        throw error;
+        console.error('Error sending email:', error);
+        throw new Error('Email could not be sent');
     }
 };
 
