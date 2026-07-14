@@ -22,7 +22,10 @@ app.use(helmet());
 // CORS — restrict to your frontend domain(s)
 const allowedOrigins = [
   'https://savourfiesta-webapplication.vercel.app',
-  'http://localhost:5173'
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://www.savourfiesta.shop',
+  'https://savourfiesta.shop'
 ];
 app.use(cors({
   origin: function (origin, callback) {
