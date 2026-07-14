@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log*
+.env
+.env.*
+.git
+.gitignore
+uploads/
+screenshots/
+*.txt
+*.log
+debug_output*.txt
+error*.txt
+test_db.js
+README.md
+Dockerfile
+.dockerignore
