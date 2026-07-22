@@ -31,13 +31,13 @@ const MenuCard = ({ item }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-row md:flex-col h-32 md:h-full group">
       {/* Image Section */}
-      <div className="relative overflow-hidden w-32 md:w-full flex-shrink-0 md:h-48">
+      <div className="relative overflow-hidden w-32 md:w-full flex-shrink-0 md:h-48 bg-white flex items-center justify-center p-2">
         <OptimizedImage
           src={item.productUrl ? getMenuCardImage(item.productUrl) : `https://placehold.co/400x300?text=${encodeURIComponent(item.productName)}`}
           alt={item.productName}
           fallbackText={item.productName}
-          className="w-full h-full"
-          style={{ mixBlendMode: "multiply" }}
+          className="w-full h-full flex items-center justify-center"
+          objectFit="contain"
           rootMargin="300px"
         />
         {/* Category Badge */}

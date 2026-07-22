@@ -32,56 +32,54 @@ export const optimizeCloudinaryUrl = (url, options = {}) => {
   if (!isCloudinaryUrl(url)) return url;
 
   const {
-    width = 400,
-    height,
-    crop = 'fill',
+    width = 500,
+    height = 500,
+    crop = 'limit',
     quality = 'auto',
     format = 'auto',
-    gravity = 'auto',
   } = options;
 
-  // Build transformation string
-  let transform = `f_${format},q_${quality},w_${width}`;
-  if (height) transform += `,h_${height}`;
-  transform += `,c_${crop},g_${gravity}`;
-
-  // Cloudinary URL structure:
-  // https://res.cloudinary.com/{cloud}/image/upload/{existing_transforms}/{path}
-  // We need to inject our transforms after /upload/
   const uploadIndex = url.indexOf('/upload/');
   if (uploadIndex === -1) return url;
 
   const before = url.substring(0, uploadIndex + 8); // includes '/upload/'
-  const after = url.substring(uploadIndex + 8);
+  let after = url.substring(uploadIndex + 8);
 
-  // Check if there are already transformations (they contain commas or slashes before the version)
-  // If the path starts with 'v' followed by digits, there are no existing transforms
-  // If it starts with something else, there might be existing transforms
-  // For simplicity, we'll prepend our transforms
+  // Strip existing transformation segment if present (e.g. c_fill,w_400,h_300/...)
+  const parts = after.split('/');
+  if (parts.length > 1 && (parts[0].includes('c_') || parts[0].includes('w_') || parts[0].includes('h_') || parts[0].includes('f_') || parts[0].includes('q_'))) {
+    parts.shift();
+    after = parts.join('/');
+  }
+
+  let transform = `f_${format},q_${quality},w_${width}`;
+  if (height && crop !== 'limit') transform += `,h_${height}`;
+  transform += `,c_${crop}`;
+
   return `${before}${transform}/${after}`;
 };
 
 /**
- * Get optimized image URL for menu cards (small thumbnails)
+ * Get optimized image URL for menu cards (un-cropped full image)
  */
 export const getMenuCardImage = (url) => {
   return optimizeCloudinaryUrl(url, {
-    width: 400,
-    height: 300,
-    crop: 'fill',
+    width: 500,
+    height: 500,
+    crop: 'limit',
     quality: 'auto:good',
   });
 };
 
 /**
- * Get optimized image URL for cart thumbnails (tiny)
+ * Get optimized image URL for cart thumbnails (un-cropped)
  */
 export const getCartThumbnail = (url) => {
   return optimizeCloudinaryUrl(url, {
-    width: 128,
-    height: 128,
-    crop: 'fill',
-    quality: 'auto:low',
+    width: 200,
+    height: 200,
+    crop: 'limit',
+    quality: 'auto:good',
   });
 };
 
@@ -92,7 +90,7 @@ export const getHeroBannerImage = (url) => {
   return optimizeCloudinaryUrl(url, {
     width: 1200,
     height: 500,
-    crop: 'fill',
+    crop: 'limit',
     quality: 'auto:good',
   });
 };
@@ -104,7 +102,7 @@ export const getPlaceholderImage = (url) => {
   return optimizeCloudinaryUrl(url, {
     width: 30,
     height: 20,
-    crop: 'fill',
+    crop: 'limit',
     quality: 'auto:low',
     format: 'auto',
   });
@@ -117,7 +115,8 @@ export const getNavbarLogo = (url) => {
   return optimizeCloudinaryUrl(url, {
     width: 200,
     height: 80,
-    crop: 'fit',
+    crop: 'limit',
     quality: 'auto:good',
   });
 };
+

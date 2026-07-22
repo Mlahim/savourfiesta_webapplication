@@ -15,6 +15,8 @@ const OptimizedImage = ({
   className = "",
   fallbackText = "Food",
   style = {},
+  imgStyle = {},
+  objectFit = "contain",
   rootMargin = "200px", // Start loading 200px before entering viewport
   ...props
 }) => {
@@ -58,7 +60,7 @@ const OptimizedImage = ({
       style={{
         position: "relative",
         overflow: "hidden",
-        backgroundColor: "#f3f4f6",
+        backgroundColor: style.backgroundColor || "transparent",
         ...style,
       }}
     >
@@ -71,9 +73,10 @@ const OptimizedImage = ({
           style={{
             width: "100%",
             height: "100%",
-            objectFit: "contain",
-            transition: "opacity 0.4s ease-in-out",
+            objectFit: objectFit,
+            transition: "opacity 0.3s ease-in-out",
             opacity: loaded || error ? 1 : 0,
+            ...imgStyle,
           }}
           {...props}
         />

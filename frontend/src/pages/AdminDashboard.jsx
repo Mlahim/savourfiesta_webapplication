@@ -6,8 +6,9 @@ import {
     Package, ClipboardList, ChefHat, Truck, CheckCircle, XCircle, Clock,
     MapPin, Phone, Mail, User, Eye, EyeOff, ToggleLeft, ToggleRight,
     Flame, Drumstick, CookingPot, ArrowRight, Pencil, X, Save, Tag, Percent,
-    RotateCcw, AlertTriangle, Settings, Plus, Upload, ImageIcon, Trash2, TrendingUp, DollarSign, Activity, Calendar, FileText, ChevronDown, ChevronUp
+    RotateCcw, AlertTriangle, Settings, Plus, Upload, ImageIcon, Trash2, TrendingUp, DollarSign, Activity, Calendar, FileText, ChevronDown, ChevronUp, Utensils
 } from "lucide-react";
+import { getCartThumbnail } from "../utils/optimizeImage";
 
 const STATUS_FLOW = ['pending', 'confirmed', 'preparing', 'enroute', 'delivered', 'delivery_failed'];
 
@@ -322,6 +323,18 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Constraint check: File type
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                toast.error('Invalid image type. Please upload JPG, PNG, or WEBP.');
+                return;
+            }
+            // Constraint check: File size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size too large. Maximum allowed size is 5MB.');
+                return;
+            }
+
             setNewItemForm(prev => ({
                 ...prev,
                 image: file,
@@ -546,34 +559,40 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                             {/* Image and Description */}
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Image Upload</label>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="block text-sm font-semibold text-gray-700">Image Upload</label>
+                                        <span className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-bold">Auto-fitted (No Zoom/Crop)</span>
+                                    </div>
                                     <div className="flex items-start gap-4">
-                                        <label className="flex-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer transition-colors h-32">
-                                            <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                                            <span className="text-sm font-medium text-gray-600">Choose Image or Drop Here</span>
-                                            <span className="text-xs text-gray-400 mt-1">JPEG, PNG up to 5MB</span>
+                                        <label className="flex-1 flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer transition-colors h-32 text-center">
+                                            <Upload className="w-7 h-7 text-orange-500 mb-1" />
+                                            <span className="text-xs font-semibold text-gray-700">Choose Image or Drop Here</span>
+                                            <span className="text-[10px] text-gray-400 mt-0.5">JPG, PNG, WEBP up to 5MB</span>
+                                            <span className="text-[9px] text-gray-400 mt-1 italic">Images scale proportionally without zooming or cropping</span>
                                             <input 
                                                 type="file" 
-                                                accept="image/*"
+                                                accept="image/png, image/jpeg, image/webp, image/jpg"
                                                 onChange={handleFileChange}
                                                 className="hidden" 
                                             />
                                         </label>
                                         {newItemForm.imagePreview ? (
-                                            <div className="w-32 h-32 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0 relative group">
-                                                <img src={newItemForm.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                            <div className="w-32 h-32 rounded-xl border border-gray-200 bg-white flex items-center justify-center p-2 flex-shrink-0 relative group shadow-inner">
+                                                <img src={newItemForm.imagePreview} alt="Preview" className="w-full h-full object-contain" />
                                                 <button 
                                                     type="button"
                                                     onClick={() => setNewItemForm(prev => ({...prev, image: null, imagePreview: null}))}
-                                                    className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-90 hover:opacity-100 transition-opacity shadow cursor-pointer"
+                                                    title="Remove image"
                                                 >
                                                     <X size={14} />
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="w-32 h-32 rounded-xl border border-gray-200 bg-gray-50 flex flex-col items-center justify-center flex-shrink-0 text-gray-400">
-                                                <ImageIcon className="w-8 h-8 opacity-50 mb-1" />
-                                                <span className="text-xs font-medium">Preview</span>
+                                            <div className="w-32 h-32 rounded-xl border border-gray-200 bg-gray-50 flex flex-col items-center justify-center flex-shrink-0 text-gray-400 p-2 text-center">
+                                                <ImageIcon className="w-7 h-7 opacity-50 mb-1 text-orange-400" />
+                                                <span className="text-[11px] font-semibold text-gray-600">Card Frame Preview</span>
+                                                <span className="text-[9px] text-gray-400 mt-0.5">Full image fit mode</span>
                                             </div>
                                         )}
                                     </div>
@@ -640,15 +659,31 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                                         className={`bg-white rounded-xl border p-4 transition-all
                                             ${item.available ? 'border-gray-100 hover:shadow-md' : 'border-red-200 bg-red-50/30 opacity-75'}`}
                                     >
-                                        {/* Top row: name + availability */}
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                <h4 className="font-bold text-gray-800 text-sm truncate">{item.productName}</h4>
-                                                {item.productSubCategory && (
-                                                    <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full whitespace-nowrap">
-                                                        {item.productSubCategory}
-                                                    </span>
+                                        {/* Top row: thumbnail + name + availability */}
+                                        <div className="flex items-center justify-between mb-2 gap-2">
+                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                {item.productUrl ? (
+                                                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-white border border-gray-100 flex-shrink-0 flex items-center justify-center p-0.5 shadow-sm">
+                                                        <img
+                                                            src={getCartThumbnail(item.productUrl)}
+                                                            alt={item.productName}
+                                                            className="w-full h-full object-contain"
+                                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-400 flex-shrink-0">
+                                                        <Utensils size={18} />
+                                                    </div>
                                                 )}
+                                                <div className="min-w-0">
+                                                    <h4 className="font-bold text-gray-800 text-sm truncate">{item.productName}</h4>
+                                                    {item.productSubCategory && (
+                                                        <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full inline-block mt-0.5">
+                                                            {item.productSubCategory}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                             <button
                                                 onClick={() => toggleAvailability(item._id)}

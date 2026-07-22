@@ -14,7 +14,7 @@ const storage = new CloudinaryStorage({
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
         format: 'webp', // Convert all uploads to WebP for smaller file sizes
         transformation: [
-            { width: 600, height: 400, crop: 'fill', quality: 'auto:good', fetch_format: 'auto' }
+            { width: 600, height: 600, crop: 'limit', quality: 'auto:good', fetch_format: 'auto' }
         ],
     },
 });

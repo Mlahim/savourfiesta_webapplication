@@ -71,7 +71,7 @@ const Cart = () => {
                       <img
                         src={getCartThumbnail(item.productId?.productUrl || item.productUrl) || `https://placehold.co/400x300?text=${encodeURIComponent(name)}`}
                         alt={name}
-                        className="w-full h-full object-cover mix-blend-multiply"
+                        className="w-full h-full object-contain p-1"
                         loading="lazy"
                         decoding="async"
                         onError={(e) => {
