@@ -9,6 +9,13 @@ router.get('/', menuController.getAllMenu);
 router.get('/:id', menuController.getOneItem);
 
 // ADMIN
+router.put(
+  '/reorder',
+  auth,
+  role('admin'),
+  menuController.reorderItems
+);
+
 router.post(
   '/',
   auth,

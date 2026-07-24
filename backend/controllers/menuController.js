@@ -3,7 +3,7 @@ const Menu = require('../models/Menu');
 // GET ALL MENU
 exports.getAllMenu = async (req, res) => {
   try {
-    const menu = await Menu.find();
+    const menu = await Menu.find().sort({ sortOrder: 1, createdAt: 1 });
     // Use no-cache so the browser always revalidates after mutations (edit/delete/add)
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
@@ -165,5 +165,29 @@ exports.updatePrice = async (req, res) => {
   } catch (error) {
     console.error("Update Price Error:", error);
     res.status(500).json({ message: "Failed to update price" });
+  }
+};
+
+// REORDER ITEMS (Admin - drag and drop)
+exports.reorderItems = async (req, res) => {
+  try {
+    const { orderedItems } = req.body; // [{ id: '...', sortOrder: 0 }, { id: '...', sortOrder: 1 }, ...]
+    if (!Array.isArray(orderedItems) || orderedItems.length === 0) {
+      return res.status(400).json({ message: 'No items to reorder' });
+    }
+
+    const bulkOps = orderedItems.map(item => ({
+      updateOne: {
+        filter: { _id: item.id },
+        update: { $set: { sortOrder: item.sortOrder } }
+      }
+    }));
+
+    await Menu.bulkWrite(bulkOps);
+    const updatedMenu = await Menu.find().sort({ sortOrder: 1, createdAt: 1 });
+    res.status(200).json({ message: 'Menu order updated', items: updatedMenu });
+  } catch (error) {
+    console.error('Reorder Error:', error);
+    res.status(500).json({ message: 'Failed to reorder items' });
   }
 };

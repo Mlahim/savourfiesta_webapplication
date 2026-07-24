@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import toast from "react-hot-toast";
@@ -6,9 +6,29 @@ import {
     Package, ClipboardList, ChefHat, Truck, CheckCircle, XCircle, Clock,
     MapPin, Phone, Mail, User, Eye, EyeOff, ToggleLeft, ToggleRight,
     Flame, Drumstick, CookingPot, ArrowRight, Pencil, X, Save, Tag, Percent,
-    RotateCcw, AlertTriangle, Settings, Plus, Upload, ImageIcon, Trash2, TrendingUp, DollarSign, Activity, Calendar, FileText, ChevronDown, ChevronUp, Utensils
+    RotateCcw, AlertTriangle, Settings, Plus, Upload, ImageIcon, Trash2, TrendingUp, DollarSign, Activity, Calendar, FileText, ChevronDown, ChevronUp, Utensils, GripVertical
 } from "lucide-react";
 import { getCartThumbnail } from "../utils/optimizeImage";
+import { polyfill } from "mobile-drag-drop";
+import { scrollBehaviourDragImageTranslateOverride } from "mobile-drag-drop/scroll-behaviour";
+import "mobile-drag-drop/default.css";
+
+// Initialize mobile drag-and-drop polyfill
+// Using forceApply: true makes it work in Chrome DevTools Device Emulator
+polyfill({
+    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
+    holdToDrag: 300,
+    forceApply: true
+});
+
+// Prevent context menu (long press) on draggable items which interferes with mobile dragging
+if (typeof window !== 'undefined') {
+    window.addEventListener('contextmenu', (e) => {
+        if (e.target.closest('[draggable]')) {
+            // e.preventDefault(); // Optional: prevent context menu globally on draggable items
+        }
+    });
+}
 
 const STATUS_FLOW = ['pending', 'confirmed', 'preparing', 'enroute', 'delivered', 'delivery_failed'];
 
@@ -263,6 +283,12 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
     const [editingId, setEditingId] = useState(null);
     const [priceForm, setPriceForm] = useState({ newPrice: '', oldPrice: '' });
     const [showAddForm, setShowAddForm] = useState(false);
+
+    // Drag and drop state
+    const dragItem = useRef(null);
+    const dragOverItem = useRef(null);
+    const [dragCategory, setDragCategory] = useState(null);
+    const [dragOverId, setDragOverId] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -491,11 +517,13 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
         }
     };
 
-    // Group by category
+    // Group by category and then by subCategory
     const grouped = menuItems.reduce((acc, item) => {
         const cat = item.productCategory || "Other";
-        if (!acc[cat]) acc[cat] = [];
-        acc[cat].push(item);
+        const subCat = item.productSubCategory || "Other";
+        if (!acc[cat]) acc[cat] = {};
+        if (!acc[cat][subCat]) acc[cat][subCat] = [];
+        acc[cat][subCat].push(item);
         return acc;
     }, {});
 
@@ -515,6 +543,95 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
             .map(item => item.productSubCategory)
             .filter(Boolean)
     )];
+
+    // ---- Drag and Drop Handlers ----
+    const handleDragStart = (e, item, category, subCategory) => {
+        dragItem.current = item;
+        setDragCategory(`${category}-${subCategory}`);
+        e.dataTransfer.effectAllowed = 'move';
+        // Make the drag image slightly transparent
+        setTimeout(() => {
+            e.target.style.opacity = '0.4';
+        }, 0);
+    };
+
+    const handleDragEnd = (e) => {
+        e.target.style.opacity = '1';
+        dragItem.current = null;
+        dragOverItem.current = null;
+        setDragCategory(null);
+        setDragOverId(null);
+    };
+
+    const handleDragOver = (e, item, category, subCategory) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const targetGroup = `${category}-${subCategory}`;
+        if (dragItem.current && item._id !== dragItem.current._id && dragCategory === targetGroup) {
+            dragOverItem.current = item;
+            setDragOverId(item._id);
+        }
+    };
+
+    const handleDragLeave = () => {
+        setDragOverId(null);
+    };
+
+    const handleDrop = async (e, category, subCategory) => {
+        e.preventDefault();
+        setDragOverId(null);
+
+        if (!dragItem.current || !dragOverItem.current) return;
+        if (dragItem.current._id === dragOverItem.current._id) return;
+
+        const targetGroup = `${category}-${subCategory}`;
+        if (dragCategory !== targetGroup) return; // Prevent dragging across sub-categories
+
+        // Get items in this subcategory
+        const groupItems = menuItems.filter(m => (m.productCategory || 'Other') === category && (m.productSubCategory || 'Other') === subCategory);
+        const dragIdx = groupItems.findIndex(m => m._id === dragItem.current._id);
+        const dropIdx = groupItems.findIndex(m => m._id === dragOverItem.current._id);
+
+        if (dragIdx === -1 || dropIdx === -1) return;
+
+        // Find the original global indices of the items in this subcategory
+        const globalIndices = groupItems.map(item => menuItems.findIndex(m => m._id === item._id));
+
+        // Reorder subcategory items locally
+        const reordered = [...groupItems];
+        const [removed] = reordered.splice(dragIdx, 1);
+        reordered.splice(dropIdx, 0, removed);
+
+        // Place the reordered items back into their original global slots
+        const newMenuItems = [...menuItems];
+        globalIndices.forEach((globalIdx, i) => {
+            newMenuItems[globalIdx] = reordered[i];
+        });
+
+        // Assign a unique global sortOrder to EVERY item so that the DB completely mirrors this exact sequence
+        // This ensures categories and subcategories never randomly shift their relative positions
+        const orderedPayload = newMenuItems.map((item, idx) => ({
+            id: item._id,
+            sortOrder: idx
+        }));
+
+        // Optimistic UI update
+        setMenuItems(newMenuItems);
+
+        try {
+            const res = await axios.put('/menu/reorder', { orderedItems: orderedPayload });
+            setMenuItems(res.data.items);
+            toast.success('Menu order updated');
+        } catch (err) {
+            toast.error('Failed to reorder items');
+            // Revert on failure
+            setMenuItems(menuItems);
+        }
+
+        dragItem.current = null;
+        dragOverItem.current = null;
+        setDragCategory(null);
+    };
 
     return (
         <div className="space-y-8">
@@ -936,27 +1053,56 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                 </div>
             )}
 
-            {Object.entries(grouped).map(([category, items]) => {
+            {Object.entries(grouped).map(([category, subCategories]) => {
                 const CatIcon = categoryIcons[category] || ChefHat;
                 return (
-                    <div key={category}>
-                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <CatIcon size={20} className="text-orange-500" /> {category}
+                    <div key={category} className="mb-10">
+                        <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2 border-b pb-2">
+                            <CatIcon size={24} className="text-orange-500" /> {category}
                         </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {items.map(item => {
-                                const isEditing = editingId === item._id;
-                                const hasDiscount = item.originalPrice && item.discountedPrice;
+                        <div className="space-y-8">
+                            {Object.entries(subCategories).map(([subCategory, items]) => (
+                                <div key={subCategory} className="pl-2">
+                                    {subCategory !== 'Other' && (
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="h-px w-8 bg-gradient-to-r from-orange-300 to-transparent"></div>
+                                            <h4 className="text-md font-bold text-gray-700 bg-orange-50 px-3 py-1 rounded-full border border-orange-200 inline-block">
+                                                {subCategory}
+                                            </h4>
+                                            <span className="text-xs font-medium text-gray-400">(drag to reorder)</span>
+                                            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
+                                        </div>
+                                    )}
+                                    {subCategory === 'Other' && (
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <span className="text-xs font-medium text-gray-400 italic">(drag to reorder general items)</span>
+                                        </div>
+                                    )}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {items.map(item => {
+                                            const isEditing = editingId === item._id;
+                                            const hasDiscount = item.originalPrice && item.discountedPrice;
+                                            const isDragOver = dragOverId === item._id;
 
-                                return (
-                                    <div
-                                        key={item._id}
-                                        className={`bg-white rounded-xl border p-4 transition-all
-                                            ${item.available ? 'border-gray-100 hover:shadow-md' : 'border-red-200 bg-red-50/30 opacity-75'}`}
-                                    >
-                                        {/* Top row: thumbnail + name + availability */}
-                                        <div className="flex items-center justify-between mb-2 gap-2">
+                                            return (
+                                                <div
+                                                    key={item._id}
+                                                    draggable
+                                                    onDragStart={(e) => handleDragStart(e, item, category, subCategory)}
+                                                    onDragEnd={handleDragEnd}
+                                                    onDragOver={(e) => handleDragOver(e, item, category, subCategory)}
+                                                    onDragLeave={handleDragLeave}
+                                                    onDrop={(e) => handleDrop(e, category, subCategory)}
+                                                    className={`bg-white rounded-xl border p-4 transition-all cursor-grab active:cursor-grabbing
+                                                        ${item.available ? 'border-gray-100 hover:shadow-md' : 'border-red-200 bg-red-50/30 opacity-75'}
+                                                        ${isDragOver ? 'border-orange-400 border-2 shadow-lg scale-[1.02] bg-orange-50/20' : ''}`}
+                                                >
+                                                    {/* Top row: drag handle + thumbnail + name + availability */}
+                                                    <div className="flex items-center justify-between mb-2 gap-2">
                                             <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                <div className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing flex-shrink-0" title="Drag to reorder">
+                                                    <GripVertical size={16} />
+                                                </div>
                                                 {item.productUrl ? (
                                                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-white border border-gray-100 flex-shrink-0 flex items-center justify-center p-0.5 shadow-sm">
                                                         <img
@@ -1092,6 +1238,9 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                                     </div>
                                 );
                             })}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 );

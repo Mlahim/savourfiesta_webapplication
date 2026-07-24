@@ -9,7 +9,8 @@ const menuSchema = new mongoose.Schema({
   discountedPrice: { type: Number, default: null },
   productDescription: String,
   productUrl: String,
-  available: { type: Boolean, default: true }
+  available: { type: Boolean, default: true },
+  sortOrder: { type: Number, default: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Menu', menuSchema);
