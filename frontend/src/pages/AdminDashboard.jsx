@@ -1053,7 +1053,12 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                 </div>
             )}
 
-            {Object.entries(grouped).map(([category, subCategories]) => {
+            {Object.keys(grouped).sort((a, b) => {
+                if (a === 'Other') return 1;
+                if (b === 'Other') return -1;
+                return a.localeCompare(b);
+            }).map(category => {
+                const subCategories = grouped[category];
                 const CatIcon = categoryIcons[category] || ChefHat;
                 return (
                     <div key={category} className="mb-10">
@@ -1061,7 +1066,13 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                             <CatIcon size={24} className="text-orange-500" /> {category}
                         </h3>
                         <div className="space-y-8">
-                            {Object.entries(subCategories).map(([subCategory, items]) => (
+                            {Object.keys(subCategories).sort((a, b) => {
+                                if (a === 'Other') return 1;
+                                if (b === 'Other') return -1;
+                                return a.localeCompare(b);
+                            }).map(subCategory => {
+                                const items = subCategories[subCategory];
+                                return (
                                 <div key={subCategory} className="pl-2">
                                     {subCategory !== 'Other' && (
                                         <div className="flex items-center gap-3 mb-4">
@@ -1240,7 +1251,8 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                             })}
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 );
