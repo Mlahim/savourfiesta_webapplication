@@ -46,6 +46,9 @@ exports.addItems = async (req, res) => {
       productUrl = req.file.path; // Cloudinary URL
     }
 
+    const maxItem = await Menu.findOne().sort({ sortOrder: -1 });
+    const nextSortOrder = maxItem ? (maxItem.sortOrder || 0) + 1 : 0;
+
     const newItem = new Menu({
       productName,
       productCategory,
@@ -53,7 +56,8 @@ exports.addItems = async (req, res) => {
       productPrice,
       productDescription,
       productUrl,
-      available
+      available,
+      sortOrder: nextSortOrder
     });
 
     await newItem.save();
