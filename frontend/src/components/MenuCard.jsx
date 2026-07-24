@@ -57,10 +57,10 @@ const MenuCard = ({ item }) => {
             </div>
           )}
           <h3 className="font-bold text-sm text-gray-800 mb-1 line-clamp-1 leading-tight">{item.productName}</h3>
-          <p className="text-gray-500 text-[10px] sm:text-xs line-clamp-2 mb-1 hidden sm:block">
+          <p className="text-gray-500 text-[10px] sm:text-xs line-clamp-2 mb-1">
             {item.productDescription || `Delicious ${item.productSubCategory || item.productCategory}.`}
           </p>
-          <div className="md:hidden text-[10px] text-gray-400 mb-1 truncate">{item.productSubCategory}</div>
+
         </div>
 
         <div className="mt-auto md:space-y-3">

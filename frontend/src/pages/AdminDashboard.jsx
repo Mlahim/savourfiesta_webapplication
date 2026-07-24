@@ -289,6 +289,10 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
     const dragOverItem = useRef(null);
     const [dragCategory, setDragCategory] = useState(null);
     const [dragOverId, setDragOverId] = useState(null);
+
+    const dragSubCat = useRef(null);
+    const dragOverSubCat = useRef(null);
+    const [dragOverSubCatId, setDragOverSubCatId] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -631,6 +635,103 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
         dragItem.current = null;
         dragOverItem.current = null;
         setDragCategory(null);
+    };
+
+    // ---- Subcategory Drag and Drop Handlers ----
+    const handleSubCatDragStart = (e, subCategory, category) => {
+        dragSubCat.current = { subCategory, category };
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => {
+            e.target.style.opacity = '0.4';
+        }, 0);
+    };
+
+    const handleSubCatDragEnd = (e) => {
+        e.target.style.opacity = '1';
+        dragSubCat.current = null;
+        dragOverSubCat.current = null;
+        setDragOverSubCatId(null);
+    };
+
+    const handleSubCatDragOver = (e, subCategory, category) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragSubCat.current && subCategory !== dragSubCat.current.subCategory && category === dragSubCat.current.category) {
+            dragOverSubCat.current = { subCategory, category };
+            setDragOverSubCatId(subCategory);
+        }
+    };
+
+    const handleSubCatDragLeave = () => {
+        setDragOverSubCatId(null);
+    };
+
+    const handleSubCatDrop = async (e, category) => {
+        e.preventDefault();
+        setDragOverSubCatId(null);
+
+        if (!dragSubCat.current || !dragOverSubCat.current) return;
+        if (dragSubCat.current.subCategory === dragOverSubCat.current.subCategory) return;
+        if (dragSubCat.current.category !== category || dragOverSubCat.current.category !== category) return;
+
+        const catItems = menuItems.filter(m => (m.productCategory || 'Other') === category);
+        const sourceSubCat = dragSubCat.current.subCategory;
+        const targetSubCat = dragOverSubCat.current.subCategory;
+
+        // Group items by subcategory within this category
+        const catGrouped = catItems.reduce((acc, item) => {
+            const sub = item.productSubCategory || 'Other';
+            if (!acc[sub]) acc[sub] = [];
+            acc[sub].push(item);
+            return acc;
+        }, {});
+
+        // Get sorted subcategories for this category based on their appearance in menuItems
+        const subCatKeys = [...new Set(catItems.map(m => m.productSubCategory || 'Other'))];
+        
+        const dragIdx = subCatKeys.indexOf(sourceSubCat);
+        const dropIdx = subCatKeys.indexOf(targetSubCat);
+
+        if (dragIdx === -1 || dropIdx === -1) return;
+
+        // Reorder subcategories
+        const reorderedSubCats = [...subCatKeys];
+        const [removed] = reorderedSubCats.splice(dragIdx, 1);
+        reorderedSubCats.splice(dropIdx, 0, removed);
+
+        // Build a flat array of items for this category based on the new subcategory order
+        const reorderedCatItems = [];
+        reorderedSubCats.forEach(sub => {
+            reorderedCatItems.push(...(catGrouped[sub] || []));
+        });
+
+        // Find the original global indices of all items in this category
+        const globalIndices = catItems.map(item => menuItems.findIndex(m => m._id === item._id));
+
+        // Place the reordered items back into their original global slots
+        const newMenuItems = [...menuItems];
+        globalIndices.forEach((globalIdx, i) => {
+            newMenuItems[globalIdx] = reorderedCatItems[i];
+        });
+
+        const orderedPayload = newMenuItems.map((item, idx) => ({
+            id: item._id,
+            sortOrder: idx
+        }));
+
+        setMenuItems(newMenuItems);
+
+        try {
+            const res = await axios.put('/menu/reorder', { orderedItems: orderedPayload });
+            setMenuItems(res.data.items);
+            toast.success('Subcategories reordered');
+        } catch (err) {
+            toast.error('Failed to reorder subcategories');
+            setMenuItems(menuItems);
+        }
+
+        dragSubCat.current = null;
+        dragOverSubCat.current = null;
     };
 
     return (
@@ -1069,13 +1170,27 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                             {Object.keys(subCategories).sort((a, b) => {
                                 if (a === 'Other') return 1;
                                 if (b === 'Other') return -1;
-                                return a.localeCompare(b);
+                                const aIdx = menuItems.findIndex(m => (m.productCategory || 'Other') === category && (m.productSubCategory || 'Other') === a);
+                                const bIdx = menuItems.findIndex(m => (m.productCategory || 'Other') === category && (m.productSubCategory || 'Other') === b);
+                                return aIdx - bIdx;
                             }).map(subCategory => {
                                 const items = subCategories[subCategory];
+                                const isSubCatDragOver = dragOverSubCatId === subCategory;
                                 return (
-                                <div key={subCategory} className="pl-2">
+                                <div key={subCategory} className={`pl-2 transition-all ${isSubCatDragOver ? 'border-orange-400 border-l-4 ml-[-4px] pl-3' : ''}`}>
                                     {subCategory !== 'Other' && (
-                                        <div className="flex items-center gap-3 mb-4">
+                                        <div 
+                                            className="flex items-center gap-3 mb-4 cursor-grab active:cursor-grabbing p-2 hover:bg-orange-50/50 rounded-lg -ml-2"
+                                            draggable
+                                            onDragStart={(e) => handleSubCatDragStart(e, subCategory, category)}
+                                            onDragEnd={handleSubCatDragEnd}
+                                            onDragOver={(e) => handleSubCatDragOver(e, subCategory, category)}
+                                            onDragLeave={handleSubCatDragLeave}
+                                            onDrop={(e) => handleSubCatDrop(e, category)}
+                                        >
+                                            <div className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing" title="Drag to reorder subcategory">
+                                                <GripVertical size={16} />
+                                            </div>
                                             <div className="h-px w-8 bg-gradient-to-r from-orange-300 to-transparent"></div>
                                             <h4 className="text-md font-bold text-gray-700 bg-orange-50 px-3 py-1 rounded-full border border-orange-200 inline-block">
                                                 {subCategory}
