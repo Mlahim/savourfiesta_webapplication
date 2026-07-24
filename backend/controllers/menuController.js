@@ -4,9 +4,10 @@ const Menu = require('../models/Menu');
 exports.getAllMenu = async (req, res) => {
   try {
     const menu = await Menu.find();
-    // Allow browsers/CDNs to cache menu data for 5 minutes
-    // stale-while-revalidate allows serving stale data while fetching fresh in background
-    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+    // Use no-cache so the browser always revalidates after mutations (edit/delete/add)
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     res.status(200).json(menu);
   } catch (error) {
     console.error("Get Menu Error:", error);
@@ -66,19 +67,26 @@ exports.addItems = async (req, res) => {
 // UPDATE ITEM
 exports.updateItem = async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    if (req.file) {
-      updateData.productUrl = req.file.path; // Cloudinary URL
-    }
-
-    const item = await Menu.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    );
+    const item = await Menu.findById(req.params.id);
     if (!item) {
       return res.status(404).json({ message: "Item not found" });
     }
+
+    // Explicitly pick and update each field from the form data
+    if (req.body.productName !== undefined) item.productName = req.body.productName;
+    if (req.body.productCategory !== undefined) item.productCategory = req.body.productCategory;
+    if (req.body.productSubCategory !== undefined) item.productSubCategory = req.body.productSubCategory;
+    if (req.body.productDescription !== undefined) item.productDescription = req.body.productDescription;
+    if (req.body.productPrice !== undefined && req.body.productPrice !== '') {
+      item.productPrice = Number(req.body.productPrice);
+    }
+
+    // Update image if a new one was uploaded
+    if (req.file) {
+      item.productUrl = req.file.path; // Cloudinary URL
+    }
+
+    await item.save();
     res.status(200).json(item);
   } catch (error) {
     console.error("Update Item Error:", error);

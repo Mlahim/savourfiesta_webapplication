@@ -268,6 +268,20 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
     const [isDeleting, setIsDeleting] = useState(false);
     const [showCatDropdown, setShowCatDropdown] = useState(false);
     const [showSubCatDropdown, setShowSubCatDropdown] = useState(false);
+    // Edit Item state
+    const [editItem, setEditItem] = useState(null);
+    const [editForm, setEditForm] = useState({
+        productName: '',
+        productCategory: '',
+        productSubCategory: '',
+        productPrice: '',
+        productDescription: '',
+        image: null,
+        imagePreview: null
+    });
+    const [editCatDropdown, setEditCatDropdown] = useState(false);
+    const [editSubCatDropdown, setEditSubCatDropdown] = useState(false);
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
     const [newItemForm, setNewItemForm] = useState({
         productName: '',
         productCategory: '',
@@ -318,6 +332,77 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
             removeDiscount: true,
             productPrice: currentOriginalPrice,
         });
+    };
+
+    // ---- Edit Item Handlers ----
+    const openEditModal = (item) => {
+        setShowAddForm(false); // close add form when editing
+        setEditItem(item);
+        setEditForm({
+            productName: item.productName || '',
+            productCategory: item.productCategory || '',
+            productSubCategory: item.productSubCategory || '',
+            productPrice: item.discountedPrice || item.productPrice || '',
+            productDescription: item.productDescription || '',
+            image: null,
+            imagePreview: item.productUrl || null
+        });
+        // Scroll to top so the inline edit form is visible
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleEditFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                toast.error('Invalid image type. Please upload JPG, PNG, or WEBP.');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size too large. Maximum allowed size is 5MB.');
+                return;
+            }
+            setEditForm(prev => ({
+                ...prev,
+                image: file,
+                imagePreview: URL.createObjectURL(file)
+            }));
+        }
+    };
+
+    const handleSaveEdit = async (e) => {
+        e.preventDefault();
+        if (!editForm.productName || !editForm.productCategory || !editForm.productPrice) {
+            toast.error('Please fill all required fields');
+            return;
+        }
+        setIsSavingEdit(true);
+        const formData = new FormData();
+        formData.append('productName', editForm.productName.trim());
+        const normalizedCategory = editForm.productCategory.trim().replace(/\b\w/g, c => c.toUpperCase());
+        formData.append('productCategory', normalizedCategory);
+        if (editForm.productSubCategory) formData.append('productSubCategory', editForm.productSubCategory.trim());
+        else formData.append('productSubCategory', '');
+        formData.append('productPrice', editForm.productPrice);
+        if (editForm.productDescription) formData.append('productDescription', editForm.productDescription.trim());
+        else formData.append('productDescription', '');
+        if (editForm.image) {
+            formData.append('image', editForm.image);
+        }
+        try {
+            const res = await axios.put(`/menu/${editItem._id}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success('Menu item updated successfully!');
+            setMenuItems(prev => prev.map(m => m._id === editItem._id ? res.data : m));
+            setEditItem(null);
+        } catch (err) {
+            console.error('Edit item error:', err);
+            toast.error(err.response?.data?.message || 'Failed to update menu item');
+        } finally {
+            setIsSavingEdit(false);
+        }
     };
 
     const handleFileChange = (e) => {
@@ -440,7 +525,7 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                     <p className="text-sm text-gray-500">Manage your dishes and availability</p>
                 </div>
                 <button
-                    onClick={() => setShowAddForm(!showAddForm)}
+                    onClick={() => { setShowAddForm(!showAddForm); setEditItem(null); }}
                     className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer"
                 >
                     {showAddForm ? <X size={18} /> : <Plus size={18} />}
@@ -567,7 +652,7 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                                         <label className="flex-1 flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer transition-colors h-32 text-center">
                                             <Upload className="w-7 h-7 text-orange-500 mb-1" />
                                             <span className="text-xs font-semibold text-gray-700">Choose Image or Drop Here</span>
-                                            <span className="text-[10px] text-gray-400 mt-0.5">JPG, PNG, WEBP up to 5MB</span>
+                                            <span className="text-[10px] text-gray-400 mt-0.5">JPG, PNG, WEBP up to 5MB · Best fit: 800×800px</span>
                                             <span className="text-[9px] text-gray-400 mt-1 italic">Images scale proportionally without zooming or cropping</span>
                                             <input 
                                                 type="file" 
@@ -633,6 +718,216 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                                 ) : (
                                     <>
                                         <Save size={18} /> Save Item
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* Edit Item Inline Form */}
+            {editItem && (
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-blue-100 animate-in fade-in slide-in-from-top-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                            <Pencil size={20} className="text-blue-500" /> Editing: {editItem.productName}
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={() => setEditItem(null)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-sm font-bold hover:bg-gray-200 transition-colors cursor-pointer"
+                        >
+                            <X size={16} /> Cancel
+                        </button>
+                    </div>
+                    <form onSubmit={handleSaveEdit} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Basic Info */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Product Name *</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.productName}
+                                        onChange={e => setEditForm(prev => ({ ...prev, productName: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
+                                        placeholder="e.g. Chicken Biryani"
+                                        required
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="relative">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Category *</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.productCategory}
+                                            onChange={e => {
+                                                setEditForm(prev => ({ ...prev, productCategory: e.target.value }));
+                                                setEditCatDropdown(true);
+                                            }}
+                                            onFocus={() => setEditCatDropdown(true)}
+                                            onBlur={() => setTimeout(() => setEditCatDropdown(false), 200)}
+                                            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
+                                            placeholder="e.g. Rice"
+                                            required
+                                            autoComplete="off"
+                                        />
+                                        {editCatDropdown && availableCategories.filter(c => c.toLowerCase().includes(editForm.productCategory.toLowerCase())).length > 0 && (
+                                            <ul className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                                                {availableCategories
+                                                    .filter(c => c.toLowerCase().includes(editForm.productCategory.toLowerCase()))
+                                                    .map(cat => (
+                                                        <li
+                                                            key={cat}
+                                                            className="px-4 py-2 hover:bg-orange-50 cursor-pointer text-sm text-gray-700 border-b border-gray-50 last:border-0"
+                                                            onClick={() => {
+                                                                setEditForm(prev => ({ ...prev, productCategory: cat }));
+                                                                setEditCatDropdown(false);
+                                                            }}
+                                                        >
+                                                            {cat}
+                                                        </li>
+                                                    ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                    <div className="relative">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Sub-Category</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.productSubCategory}
+                                            onChange={e => {
+                                                setEditForm(prev => ({ ...prev, productSubCategory: e.target.value }));
+                                                setEditSubCatDropdown(true);
+                                            }}
+                                            onFocus={() => setEditSubCatDropdown(true)}
+                                            onBlur={() => setTimeout(() => setEditSubCatDropdown(false), 200)}
+                                            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
+                                            placeholder="Optional"
+                                            autoComplete="off"
+                                        />
+                                        {editSubCatDropdown && (() => {
+                                            const editSubCats = [...new Set(
+                                                menuItems
+                                                    .filter(mi => !editForm.productCategory || mi.productCategory === editForm.productCategory)
+                                                    .map(mi => mi.productSubCategory)
+                                                    .filter(Boolean)
+                                            )];
+                                            const filtered = editSubCats.filter(c => c.toLowerCase().includes(editForm.productSubCategory.toLowerCase()));
+                                            return filtered.length > 0 ? (
+                                                <ul className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                                                    {filtered.map(subCat => (
+                                                        <li
+                                                            key={subCat}
+                                                            className="px-4 py-2 hover:bg-orange-50 cursor-pointer text-sm text-gray-700 border-b border-gray-50 last:border-0"
+                                                            onClick={() => {
+                                                                setEditForm(prev => ({ ...prev, productSubCategory: subCat }));
+                                                                setEditSubCatDropdown(false);
+                                                            }}
+                                                        >
+                                                            {subCat}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : null;
+                                        })()}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Price (Rs.) *</label>
+                                    <input
+                                        type="number"
+                                        value={editForm.productPrice}
+                                        onChange={e => setEditForm(prev => ({ ...prev, productPrice: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
+                                        placeholder="e.g. 1200"
+                                        min="0"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Image and Description */}
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="block text-sm font-semibold text-gray-700">Image Upload</label>
+                                        <span className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-bold">Auto-fitted (No Zoom/Crop)</span>
+                                    </div>
+                                    <div className="flex items-start gap-4">
+                                        <label className="flex-1 flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer transition-colors h-32 text-center">
+                                            <Upload className="w-7 h-7 text-orange-500 mb-1" />
+                                            <span className="text-xs font-semibold text-gray-700">{editForm.image ? 'Change Image' : 'Choose New Image'}</span>
+                                            <span className="text-[10px] text-gray-400 mt-0.5">JPG, PNG, WEBP up to 5MB · Best fit: 800×800px</span>
+                                            <span className="text-[9px] text-gray-400 mt-1 italic">Images scale proportionally without zooming or cropping</span>
+                                            <input
+                                                type="file"
+                                                accept="image/png, image/jpeg, image/webp, image/jpg"
+                                                onChange={handleEditFileChange}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                        {editForm.imagePreview ? (
+                                            <div className="w-32 h-32 rounded-xl border border-gray-200 bg-white flex items-center justify-center p-2 flex-shrink-0 relative group shadow-inner">
+                                                <img src={editForm.imagePreview} alt="Preview" className="w-full h-full object-contain" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditForm(prev => ({ ...prev, image: null, imagePreview: null }))}
+                                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-90 hover:opacity-100 transition-opacity shadow cursor-pointer"
+                                                    title="Remove image"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                                {editForm.image && (
+                                                    <span className="absolute bottom-1 left-1 text-[9px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold">New</span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="w-32 h-32 rounded-xl border border-gray-200 bg-gray-50 flex flex-col items-center justify-center flex-shrink-0 text-gray-400 p-2 text-center">
+                                                <ImageIcon className="w-7 h-7 opacity-50 mb-1 text-orange-400" />
+                                                <span className="text-[11px] font-semibold text-gray-600">No Image</span>
+                                                <span className="text-[9px] text-gray-400 mt-0.5">Upload one</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                                    <textarea
+                                        value={editForm.productDescription}
+                                        onChange={e => setEditForm(prev => ({ ...prev, productDescription: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200 h-24 resize-none"
+                                        placeholder="Add a tasty description..."
+                                    ></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setEditItem(null)}
+                                className="px-6 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSavingEdit}
+                                className={`px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all
+                                    ${isSavingEdit
+                                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                        : "bg-gradient-to-r from-orange-500 to-red-600 text-white hover:shadow-lg cursor-pointer"}`}
+                            >
+                                {isSavingEdit ? (
+                                    <>
+                                        <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={18} /> Save Changes
                                     </>
                                 )}
                             </button>
@@ -718,9 +1013,16 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                                             {!isEditing && (
                                                 <div className="flex gap-1 text-gray-500">
                                                     <button
+                                                        onClick={() => openEditModal(item)}
+                                                        className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 hover:text-blue-600 transition-colors cursor-pointer"
+                                                        title="Edit Item Details"
+                                                    >
+                                                        <Settings size={14} />
+                                                    </button>
+                                                    <button
                                                         onClick={() => startEditing(item)}
                                                         className="p-1.5 rounded-lg bg-gray-100 hover:bg-orange-100 hover:text-orange-600 transition-colors cursor-pointer"
-                                                        title="Edit Price"
+                                                        title="Edit Price / Discount"
                                                     >
                                                         <Pencil size={14} />
                                                     </button>
@@ -839,6 +1141,8 @@ const MenuPanel = ({ menuItems, toggleAvailability, updatePrice, setMenuItems })
                     </div>
                 </div>
             )}
+
+
         </div>
     );
 };
