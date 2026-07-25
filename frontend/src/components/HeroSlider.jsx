@@ -100,7 +100,7 @@ const HeroSlider = () => {
                             <img
                                 src={slide.image}
                                 alt={slide.title}
-                                className="w-full h-auto object-cover md:h-[65vh] md:object-cover"
+                                className="w-full h-auto object-cover md:h-[65vh] md:object-fill"
                                 loading={idx === 0 ? "eager" : "lazy"}
                                 fetchPriority={idx === 0 ? "high" : "low"}
                                 decoding={idx === 0 ? "sync" : "async"}
