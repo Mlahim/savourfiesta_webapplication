@@ -118,5 +118,5 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trigger Render Deployment
-        run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+      - name: Trigger Azure App Service Deployment
+        run: curl -X POST "${{ secrets.AZURE_DEPLOY_HOOK }}"
