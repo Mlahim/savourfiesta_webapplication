@@ -40,11 +40,6 @@ const MenuCard = ({ item }) => {
           objectFit="contain"
           rootMargin="300px"
         />
-        {/* Category Badge */}
-        <div className="absolute top-2 left-2 bg-orange-500/90 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg z-10">
-          {item.productCategory}
-        </div>
-
         {/* Discount Tag - Moved above the content area into image section to prevent overlapping heading */}
         {item.originalPrice && item.discountedPrice && (
           <div className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full shadow-lg z-10">

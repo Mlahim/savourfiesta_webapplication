@@ -192,7 +192,6 @@ const Orders = () => {
                           <div key={idx} className="py-3 flex justify-between items-center border-b border-gray-50 last:border-0">
                             <div>
                               <p className="font-semibold text-gray-800 text-sm">{name}</p>
-                              {category && <p className="text-xs text-gray-400">{category}</p>}
                               <p className="text-xs text-gray-400">Qty: {item.quantity}</p>
                             </div>
                             <p className="font-bold text-gray-700">Rs.{(item.price * item.quantity).toFixed(2)}</p>

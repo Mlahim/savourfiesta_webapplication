@@ -84,9 +84,11 @@ const Cart = () => {
                       <h3 className="font-bold text-sm md:text-lg text-gray-800 truncate">
                         {name}
                       </h3>
-                      <p className="text-gray-500 text-xs md:text-sm truncate">
-                        {category}{subCategory ? ` › ${subCategory}` : ''}
-                      </p>
+                      {subCategory && (
+                        <p className="text-gray-500 text-xs md:text-sm truncate">
+                          {subCategory}
+                        </p>
+                      )}
                       <button
                         onClick={() => removeFromCart(String(itemId))}
                         className="text-red-500 text-xs md:text-sm flex items-center gap-1 mt-1 hover:text-red-700 font-medium cursor-pointer"
