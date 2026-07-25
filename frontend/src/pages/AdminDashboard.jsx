@@ -1436,6 +1436,16 @@ const SettingsPanel = () => {
     const [newBannerText, setNewBannerText] = useState("");
     const [savingBanner, setSavingBanner] = useState(false);
 
+    // Hero Banner State
+    const defaultHeroSlides = [
+        { id: 1, image: "/hero-banner.webp", title: "Taste the Extraordinary", subtitle: "Crunchy. Spicy. Irresistible." },
+        { id: 2, image: "/hero-banner-2.webp", title: "Fresh & Delicious", subtitle: "Experience world-class dining" }
+    ];
+    const [heroBanners, setHeroBanners] = useState(defaultHeroSlides);
+    const [originalHeroBanners, setOriginalHeroBanners] = useState(defaultHeroSlides);
+    const [savingHero, setSavingHero] = useState(false);
+    const [uploadingSlideIndex, setUploadingSlideIndex] = useState(null);
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -1453,6 +1463,10 @@ const SettingsPanel = () => {
             const banners = res.data.bannerTexts || [];
             setBannerTexts(banners);
             setOriginalBannerTexts(banners);
+
+            const heroes = res.data.heroBanners && res.data.heroBanners.length > 0 ? res.data.heroBanners : defaultHeroSlides;
+            setHeroBanners(heroes);
+            setOriginalHeroBanners(heroes);
         } catch (err) {
             toast.error("Failed to load settings");
         } finally {
@@ -1504,8 +1518,80 @@ const SettingsPanel = () => {
         }
     };
 
+    // Hero Banner handlers
+    const handleHeroChange = (index, field, value) => {
+        const updated = [...heroBanners];
+        updated[index] = { ...updated[index], [field]: value };
+        setHeroBanners(updated);
+    };
+
+    const handleAddHeroSlide = () => {
+        const newId = heroBanners.length > 0 ? Math.max(...heroBanners.map(b => Number(b.id) || 0)) + 1 : 1;
+        setHeroBanners([...heroBanners, { id: newId, image: "/hero-banner.webp", title: "New Slide Title", subtitle: "New Slide Subtitle" }]);
+    };
+
+    const handleRemoveHeroSlide = (index) => {
+        if (heroBanners.length <= 1) {
+            toast.error("You must keep at least 1 hero banner!");
+            return;
+        }
+        const updated = [...heroBanners];
+        updated.splice(index, 1);
+        setHeroBanners(updated);
+    };
+
+    const handleHeroImageUpload = async (index, file) => {
+        if (!file) return;
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.src = objectUrl;
+        img.onload = async () => {
+            URL.revokeObjectURL(objectUrl);
+            const { width, height } = img;
+            const aspectRatio = width / height;
+            // Enforce resolution constraint: Min 1000x350 and landscape aspect ratio >= 1.4
+            if (width < 1000 || height < 350 || aspectRatio < 1.4) {
+                toast.error(`Invalid image resolution (${width}x${height}px). Please select a widescreen landscape image (min 1000x350 px, aspect ratio ≥ 1.4:1) to fit the hero banner correctly!`);
+                return;
+            }
+
+            setUploadingSlideIndex(index);
+            const formData = new FormData();
+            formData.append("image", file);
+            try {
+                const res = await axios.post("/settings/hero-banner-image", formData, {
+                    headers: { "Content-Type": "multipart/form-data" }
+                });
+                toast.success("Image uploaded!");
+                handleHeroChange(index, "image", res.data.imageUrl);
+            } catch (err) {
+                toast.error(err.response?.data?.message || "Failed to upload image");
+            } finally {
+                setUploadingSlideIndex(null);
+            }
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            toast.error("Failed to read image file");
+        };
+    };
+
+    const handleSaveHeroBanners = async () => {
+        setSavingHero(true);
+        try {
+            const res = await axios.put("/settings/hero-banners", { heroBanners });
+            toast.success(res.data.message);
+            setOriginalHeroBanners(res.data.heroBanners);
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to update hero banners");
+        } finally {
+            setSavingHero(false);
+        }
+    };
+
     const hasChangesDelivery = String(deliveryCharge) !== String(originalCharge);
     const hasChangesBanner = JSON.stringify(bannerTexts) !== JSON.stringify(originalBannerTexts);
+    const hasChangesHero = JSON.stringify(heroBanners) !== JSON.stringify(originalHeroBanners);
 
     if (loading) {
         return (
@@ -1667,6 +1753,145 @@ const SettingsPanel = () => {
                             <>
                                 <Save size={18} />
                                 Save Banner Settings
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Hero Banner Settings Section */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                            <ImageIcon size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-800">Hero Banners (Home Page Slider)</h2>
+                            <p className="text-sm text-gray-500">Manage home page slider images, titles, and subtitles.</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleAddHeroSlide}
+                        className="px-4 py-2 bg-purple-50 text-purple-600 font-bold rounded-xl border border-purple-200 hover:bg-purple-100 transition-colors flex items-center gap-2 text-sm cursor-pointer"
+                    >
+                        <Plus size={16} /> Add Slide
+                    </button>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3 text-amber-800 text-xs md:text-sm">
+                    <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                        <strong>Resolution Constraint Enforced:</strong> To ensure banners fit cleanly without stretching or cropping, uploaded images must be widescreen landscape (min <strong>1000x350 px</strong>, aspect ratio ≥ <strong>1.4:1</strong>).
+                    </div>
+                </div>
+
+                <div className="space-y-6">
+                    {heroBanners.map((slide, idx) => (
+                        <div key={slide.id || idx} className="bg-gray-50 rounded-xl border border-gray-200 p-4 md:p-6 relative">
+                            <div className="flex justify-between items-center mb-4">
+                                <span className="font-bold text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
+                                    Slide #{idx + 1}
+                                </span>
+                                {heroBanners.length > 1 && (
+                                    <button
+                                        onClick={() => handleRemoveHeroSlide(idx)}
+                                        className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                                        title="Delete Slide"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                                {/* Image preview & upload */}
+                                <div className="flex flex-col items-center gap-3">
+                                    <div className="w-full h-32 bg-gray-200 rounded-xl overflow-hidden relative border border-gray-300 flex items-center justify-center">
+                                        <img
+                                            src={slide.image || "/hero-banner.webp"}
+                                            alt={slide.title}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.target.src = "/hero-banner.webp"; }}
+                                        />
+                                        {uploadingSlideIndex === idx && (
+                                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xs font-bold gap-2">
+                                                <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                                                Checking & Uploading...
+                                            </div>
+                                        )}
+                                    </div>
+                                    <label className="w-full py-2 px-3 bg-white border border-gray-300 rounded-xl font-semibold text-xs text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm text-center">
+                                        <Upload size={14} />
+                                        Replace Image
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp,image/jpg"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                if (e.target.files && e.target.files[0]) {
+                                                    handleHeroImageUpload(idx, e.target.files[0]);
+                                                }
+                                            }}
+                                            disabled={uploadingSlideIndex === idx}
+                                        />
+                                    </label>
+                                </div>
+
+                                {/* Title & Subtitle inputs */}
+                                <div className="md:col-span-2 space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Slide Title</label>
+                                        <input
+                                            type="text"
+                                            value={slide.title || ""}
+                                            onChange={(e) => handleHeroChange(idx, "title", e.target.value)}
+                                            placeholder="e.g. Taste the Extraordinary"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-sm font-medium text-gray-800 bg-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Slide Subtitle</label>
+                                        <input
+                                            type="text"
+                                            value={slide.subtitle || ""}
+                                            onChange={(e) => handleHeroChange(idx, "subtitle", e.target.value)}
+                                            placeholder="e.g. Crunchy. Spicy. Irresistible."
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-sm font-medium text-gray-800 bg-white"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-8 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-6 border-t border-gray-100">
+                    {hasChangesHero && (
+                        <button
+                            onClick={() => setHeroBanners(originalHeroBanners)}
+                            className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer text-center"
+                        >
+                            Cancel Changes
+                        </button>
+                    )}
+                    <button
+                        onClick={handleSaveHeroBanners}
+                        disabled={savingHero || !hasChangesHero || uploadingSlideIndex !== null}
+                        className={`w-full sm:w-auto px-8 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all 
+                            ${savingHero || !hasChangesHero || uploadingSlideIndex !== null
+                                ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
+                                : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:shadow-lg cursor-pointer"}`}
+                    >
+                        {savingHero ? (
+                            <>
+                                <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <Save size={18} />
+                                Save Hero Banners
                             </>
                         )}
                     </button>

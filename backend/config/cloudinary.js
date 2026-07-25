@@ -19,4 +19,20 @@ const storage = new CloudinaryStorage({
     },
 });
 
-module.exports = { cloudinary, storage };
+const deleteCloudinaryImage = async (url) => {
+  if (!url || !url.includes('cloudinary.com')) return;
+  try {
+    const parts = url.split('/upload/');
+    if (parts.length > 1) {
+      let pathAfterUpload = parts[1];
+      pathAfterUpload = pathAfterUpload.replace(/^v\d+\//, '');
+      const publicId = pathAfterUpload.substring(0, pathAfterUpload.lastIndexOf('.')) || pathAfterUpload;
+      await cloudinary.uploader.destroy(publicId);
+      console.log(`Deleted Cloudinary image: ${publicId}`);
+    }
+  } catch (err) {
+    console.error("Cloudinary deletion error:", err.message);
+  }
+};
+
+module.exports = { cloudinary, storage, deleteCloudinaryImage };

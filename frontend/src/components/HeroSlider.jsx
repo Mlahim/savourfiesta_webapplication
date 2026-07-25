@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import axios from '../api/axios';
 
 const HeroSlider = () => {
-    // Assuming user put the image in public/banner1.png as requested.
-    // Adding a second placeholder to demonstrate slider functionality.
-    const slides = [
+    const defaultSlides = [
         {
             id: 1,
             image: "/hero-banner.webp",
@@ -13,45 +12,61 @@ const HeroSlider = () => {
         },
         {
             id: 2,
-            image: "/hero-banner-2.webp", // Fallback/Second image
+            image: "/hero-banner-2.webp",
             title: "Fresh & Delicious",
             subtitle: "Experience world-class dining"
         }
     ];
 
+    const [slides, setSlides] = useState(defaultSlides);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [imagesLoaded, setImagesLoaded] = useState({});
 
-    // Preload the first image immediately, others lazily
+    // Fetch live hero banners configured in Admin Settings
     useEffect(() => {
-        // Preload the first slide with high priority
+        const fetchHeroBanners = async () => {
+            try {
+                const res = await axios.get("/settings?key=heroBanners");
+                if (res.data && Array.isArray(res.data.heroBanners) && res.data.heroBanners.length > 0) {
+                    setSlides(res.data.heroBanners);
+                }
+            } catch (err) {
+                console.error("Failed to fetch hero banners:", err);
+            }
+        };
+        fetchHeroBanners();
+    }, []);
+
+    // Preload visible image immediately, others lazily
+    useEffect(() => {
+        if (!slides || slides.length === 0) return;
         const firstImg = new Image();
-        firstImg.src = slides[0].image;
+        firstImg.src = slides[0]?.image;
         firstImg.onload = () => {
             setImagesLoaded(prev => ({ ...prev, 0: true }));
         };
 
-        // Preload the second slide after a delay
         const timer = setTimeout(() => {
             slides.slice(1).forEach((slide, idx) => {
                 const img = new Image();
-                img.src = slide.image;
+                img.src = slide?.image;
                 img.onload = () => {
                     setImagesLoaded(prev => ({ ...prev, [idx + 1]: true }));
                 };
             });
-        }, 2000); // 2s delay — load non-visible slides after first paint
+        }, 2000);
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [slides]);
 
     useEffect(() => {
+        if (!slides || slides.length === 0) return;
         const timer = setInterval(() => {
             nextSlide();
         }, 5000); // Auto slide every 5 seconds
 
         return () => clearInterval(timer);
-    }, [currentIndex]);
+    }, [currentIndex, slides]);
 
     const prevSlide = () => {
         const isFirstSlide = currentIndex === 0;
