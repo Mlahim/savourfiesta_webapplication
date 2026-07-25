@@ -1,4 +1,22 @@
 const Menu = require('../models/Menu');
+const { cloudinary } = require('../config/cloudinary');
+
+// Helper to automatically delete image from Cloudinary
+const deleteCloudinaryImage = async (url) => {
+  if (!url || !url.includes('cloudinary.com')) return;
+  try {
+    const parts = url.split('/upload/');
+    if (parts.length > 1) {
+      let pathAfterUpload = parts[1];
+      pathAfterUpload = pathAfterUpload.replace(/^v\d+\//, '');
+      const publicId = pathAfterUpload.substring(0, pathAfterUpload.lastIndexOf('.')) || pathAfterUpload;
+      await cloudinary.uploader.destroy(publicId);
+      console.log(`Deleted Cloudinary image: ${publicId}`);
+    }
+  } catch (err) {
+    console.error("Cloudinary deletion error:", err.message);
+  }
+};
 
 // GET ALL MENU
 exports.getAllMenu = async (req, res) => {
@@ -87,6 +105,9 @@ exports.updateItem = async (req, res) => {
 
     // Update image if a new one was uploaded
     if (req.file) {
+      if (item.productUrl) {
+        await deleteCloudinaryImage(item.productUrl);
+      }
       item.productUrl = req.file.path; // Cloudinary URL
     }
 
@@ -104,6 +125,9 @@ exports.deleteItem = async (req, res) => {
     const item = await Menu.findByIdAndDelete(req.params.id);
     if (!item) {
       return res.status(404).json({ message: "Item not found" });
+    }
+    if (item.productUrl) {
+      await deleteCloudinaryImage(item.productUrl);
     }
     res.status(200).json({ message: "Item deleted" });
   } catch (error) {
