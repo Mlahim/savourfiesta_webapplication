@@ -29,9 +29,9 @@ const MenuCard = ({ item }) => {
   const decrement = () => setQuantity(q => q > 1 ? q - 1 : 1);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-row md:flex-col h-32 md:h-full group">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-row md:flex-col h-[9.5rem] md:h-full group">
       {/* Image Section */}
-      <div className="relative overflow-hidden w-32 md:w-full flex-shrink-0 md:h-48 bg-white flex items-center justify-center p-2">
+      <div className="relative overflow-hidden w-32 sm:w-36 md:w-full flex-shrink-0 md:h-48 bg-white flex items-center justify-center p-2">
         <OptimizedImage
           src={item.productUrl ? getMenuCardImage(item.productUrl) : `https://placehold.co/400x300?text=${encodeURIComponent(item.productName)}`}
           alt={item.productName}
@@ -45,17 +45,17 @@ const MenuCard = ({ item }) => {
           {item.productCategory}
         </div>
 
+        {/* Discount Tag - Moved above the content area into image section to prevent overlapping heading */}
+        {item.originalPrice && item.discountedPrice && (
+          <div className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full shadow-lg z-10">
+            {Math.round(((item.originalPrice - item.discountedPrice) / item.originalPrice) * 100)}% OFF
+          </div>
+        )}
       </div>
 
       {/* Content Section */}
-      <div className="p-3 flex-1 flex flex-col justify-between min-w-0 relative">
+      <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between min-w-0 relative">
         <div>
-          {/* Discount Tag */}
-          {item.originalPrice && item.discountedPrice && (
-            <div className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-md">
-              {Math.round(((item.originalPrice - item.discountedPrice) / item.originalPrice) * 100)}% OFF
-            </div>
-          )}
           <h3 className="font-bold text-sm text-gray-800 mb-1 line-clamp-1 leading-tight">{item.productName}</h3>
           <p className="text-gray-500 text-[10px] sm:text-xs line-clamp-2 mb-1">
             {item.productDescription || `Delicious ${item.productSubCategory || item.productCategory}.`}

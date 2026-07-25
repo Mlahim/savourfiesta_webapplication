@@ -2,12 +2,12 @@ import React from "react";
 
 const MenuCardSkeleton = () => {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-row md:flex-col h-32 md:h-full animate-pulse">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-row md:flex-col h-[9.5rem] md:h-full animate-pulse">
       {/* Image Section */}
-      <div className="w-32 md:w-full flex-shrink-0 md:h-48 bg-gray-200"></div>
+      <div className="w-32 sm:w-36 md:w-full flex-shrink-0 md:h-48 bg-gray-200"></div>
       
       {/* Content Section */}
-      <div className="p-3 flex-1 flex flex-col justify-between min-w-0">
+      <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between min-w-0">
         <div>
           <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
           <div className="h-3 bg-gray-200 rounded w-full mb-1 hidden sm:block"></div>
