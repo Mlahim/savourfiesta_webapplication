@@ -119,4 +119,6 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trigger Azure App Service Deployment
-        run: curl -X POST "${{ secrets.AZURE_DEPLOY_HOOK }}"
+        env:
+          AZURE_HOOK: ${{ secrets.AZURE_DEPLOY_HOOK }}
+        run: curl -f -X POST "$AZURE_HOOK"
