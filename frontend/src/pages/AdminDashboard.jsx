@@ -1763,7 +1763,7 @@ const SettingsPanel = () => {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
                 <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                        <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
                             <ImageIcon size={24} />
                         </div>
                         <div>
@@ -1773,7 +1773,7 @@ const SettingsPanel = () => {
                     </div>
                     <button
                         onClick={handleAddHeroSlide}
-                        className="px-4 py-2 bg-purple-50 text-purple-600 font-bold rounded-xl border border-purple-200 hover:bg-purple-100 transition-colors flex items-center gap-2 text-sm cursor-pointer"
+                        className="px-4 py-2 bg-orange-50 text-orange-600 font-bold rounded-xl border border-orange-200 hover:bg-orange-100 transition-colors flex items-center gap-2 text-sm cursor-pointer"
                     >
                         <Plus size={16} /> Add Slide
                     </button>
@@ -1790,7 +1790,7 @@ const SettingsPanel = () => {
                     {heroBanners.map((slide, idx) => (
                         <div key={slide.id || idx} className="bg-gray-50 rounded-xl border border-gray-200 p-4 md:p-6 relative">
                             <div className="flex justify-between items-center mb-4">
-                                <span className="font-bold text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
+                                <span className="font-bold text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full">
                                     Slide #{idx + 1}
                                 </span>
                                 {heroBanners.length > 1 && (
@@ -1847,7 +1847,7 @@ const SettingsPanel = () => {
                                             value={slide.title || ""}
                                             onChange={(e) => handleHeroChange(idx, "title", e.target.value)}
                                             placeholder="e.g. Taste the Extraordinary"
-                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-sm font-medium text-gray-800 bg-white"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all text-sm font-medium text-gray-800 bg-white"
                                         />
                                     </div>
                                     <div>
@@ -1857,7 +1857,7 @@ const SettingsPanel = () => {
                                             value={slide.subtitle || ""}
                                             onChange={(e) => handleHeroChange(idx, "subtitle", e.target.value)}
                                             placeholder="e.g. Crunchy. Spicy. Irresistible."
-                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-sm font-medium text-gray-800 bg-white"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all text-sm font-medium text-gray-800 bg-white"
                                         />
                                     </div>
                                 </div>
@@ -1881,7 +1881,7 @@ const SettingsPanel = () => {
                         className={`w-full sm:w-auto px-8 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all 
                             ${savingHero || !hasChangesHero || uploadingSlideIndex !== null
                                 ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
-                                : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:shadow-lg cursor-pointer"}`}
+                                : "bg-gradient-to-r from-orange-500 to-red-600 text-white hover:shadow-lg cursor-pointer"}`}
                     >
                         {savingHero ? (
                             <>
