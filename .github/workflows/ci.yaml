@@ -39,8 +39,10 @@ jobs:
           filters: |
             frontend:
               - 'frontend/**'
+              - '.github/workflows/ci.yaml'
             backend:
               - 'backend/**'
+              - '.github/workflows/ci.yaml'
 
   # ── Build & Push Frontend Image ──
   build-frontend:
