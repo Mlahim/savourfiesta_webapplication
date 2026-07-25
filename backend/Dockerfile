@@ -30,9 +30,9 @@ RUN mkdir -p uploads && chown -R appuser:appgroup /app
 # Switch to non-root user
 USER appuser
 
-# Expose the application port
-ENV PORT=5000
-EXPOSE $PORT
+# Default port for Azure App Service
+ENV PORT=80
+EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
