@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "https://savourfiesta-webapplication.onrender.com/api";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://savourfiesta-cvaegpeaavhfbyau.southeastasia-01.azurewebsites.net/api";
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
