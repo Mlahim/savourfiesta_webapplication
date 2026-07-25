@@ -19,6 +19,18 @@ const storage = new CloudinaryStorage({
     },
 });
 
+const heroStorage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'hotel-hero-banners',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        format: 'webp', // WebP format for fast loading
+        transformation: [
+            { width: 1920, height: 1080, crop: 'limit', quality: 'auto:best', fetch_format: 'auto' }
+        ],
+    },
+});
+
 const deleteCloudinaryImage = async (url) => {
   if (!url || !url.includes('cloudinary.com')) return;
   try {
@@ -35,4 +47,4 @@ const deleteCloudinaryImage = async (url) => {
   }
 };
 
-module.exports = { cloudinary, storage, deleteCloudinaryImage };
+module.exports = { cloudinary, storage, heroStorage, deleteCloudinaryImage };

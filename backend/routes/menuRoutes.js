@@ -2,7 +2,7 @@ const router = require('express').Router();
 const menuController = require('../controllers/menuController');
 const auth = require('../middleware/authMiddleware');
 const role = require('../middleware/userRole');
-const upload = require('../middleware/multer');
+const { upload } = require('../middleware/multer');
 
 // PUBLIC
 router.get('/', menuController.getAllMenu);
