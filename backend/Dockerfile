@@ -31,11 +31,12 @@ RUN mkdir -p uploads && chown -R appuser:appgroup /app
 USER appuser
 
 # Expose the application port
-EXPOSE 5000
+ENV PORT=5000
+EXPOSE $PORT
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/ || exit 1
 
 # Start the application
 CMD ["node", "index.js"]
