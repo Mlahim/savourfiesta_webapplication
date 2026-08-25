@@ -35,18 +35,18 @@ const AdminOrdersList = () => {
         fetchOrders();
     }, [status, navigate, currentConfig]);
 
-    const fetchOrders = async () => {
+    async function fetchOrders() {
         setLoading(true);
         try {
             const res = await axios.get("/order/admin/all");
             // Filter locally for this specific page
             const filteredOrders = res.data.filter(order => order.status === status);
             setOrders(filteredOrders);
-        } catch (err) {
+        } catch {
             toast.error("Failed to load orders");
         }
         setLoading(false);
-    };
+    }
 
     const updateStatus = async (orderId, newStatus) => {
         try {

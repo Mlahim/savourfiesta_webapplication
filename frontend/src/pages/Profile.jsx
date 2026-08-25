@@ -23,7 +23,7 @@ const Profile = () => {
         fetchProfile();
     }, [token]);
 
-    const fetchProfile = async () => {
+    async function fetchProfile() {
         try {
             const res = await axios.get("/profile");
             setProfile(res.data);
@@ -33,7 +33,7 @@ const Profile = () => {
             setErrorMessage("Failed to load profile");
             setLoading(false);
         }
-    };
+    }
 
     const handleSave = async () => {
         setSaving(true);

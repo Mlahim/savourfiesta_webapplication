@@ -121,18 +121,3 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trigger Azure App Service Deployment
-        env:
-          AZURE_HOOK: ${{ secrets.AZURE_DEPLOY_HOOK }}
-        run: |
-          CLEAN_HOOK=$(echo -n "$AZURE_HOOK" | tr -d '\r\n ' | sed 's/^["'"'"']//;s/["'"'"']$//')
-          if [[ "$CLEAN_HOOK" =~ ^(https?://)([^@]+)@(.+)$ ]]; then
-            PROTO="${BASH_REMATCH[1]}"
-            CREDS="${BASH_REMATCH[2]}"
-            HOST_PATH="${BASH_REMATCH[3]}"
-            echo "Triggering Azure webhook with separated credentials..."
-            curl -f -X POST -u "$CREDS" "${PROTO}${HOST_PATH}"
-          else
-            echo "Triggering Azure webhook..."
-            curl -f -X POST "$CLEAN_HOOK"
-          fi

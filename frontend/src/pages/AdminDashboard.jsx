@@ -1950,10 +1950,10 @@ const AnalyticsPanel = ({ orders, menuItems, fetchOrders }) => {
         }));
     };
 
-    // Aggregate Product Sales for the Selected Date
     const productSalesMap = {};
     
     ordersOnDate.forEach(order => {
+        const orderItemCount = order.items.length || 1;
         order.items.forEach(item => {
             let productName = item.productName || item.productId?.productName || "Unknown Item";
             if (!item.productId?.productName) {
@@ -1970,26 +1970,19 @@ const AnalyticsPanel = ({ orders, menuItems, fetchOrders }) => {
                     name: productName,
                     quantity: 0,
                     totalAmount: 0,
-                    orderIds: new Set()
+                    totalDc: 0
                 };
             }
             
             productSalesMap[productName].quantity += quantity;
             productSalesMap[productName].totalAmount += itemTotalAmount;
-            productSalesMap[productName].orderIds.add(order._id);
+            // Distribute delivery charge evenly across the items in the order
+            productSalesMap[productName].totalDc += (order.deliveryCharge || 0) / orderItemCount;
         });
     });
 
-    // Convert map to sorted array (highest revenue first) and calculate DC
+    // Convert map to sorted array (highest revenue first)
     const productSalesList = Object.values(productSalesMap)
-        .map(p => {
-            let dcSum = 0;
-            p.orderIds.forEach(id => {
-                const o = ordersOnDate.find(order => order._id === id);
-                if (o) dcSum += (o.deliveryCharge || 0);
-            });
-            return { ...p, totalDc: dcSum };
-        })
         .sort((a, b) => b.totalAmount - a.totalAmount);
 
     return (
